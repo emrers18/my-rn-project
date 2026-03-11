@@ -33,8 +33,8 @@ export default function RegisterScreen() {
     try {
       await signUp(email.trim().toLowerCase(), password, fullName.trim());
       Alert.alert(
-        'Neredeyse tamam! 🎉',
-        'E-posta adresine bir doğrulama bağlantısı gönderdik. Onayladıktan sonra giriş yapabilirsin.',
+        'Hoşgeldin! 🎉',
+        'Travel Bot ile seyahat planlamalarını Yapay Zeka Destekli Asistanın ile hızlıca yapabilirsin.',
         [{ text: 'Tamam', onPress: () => router.replace('/(auth)/login') }]
       );
     } catch (error: unknown) {

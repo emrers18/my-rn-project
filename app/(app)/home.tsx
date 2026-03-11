@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/store/auth-store';
 
@@ -28,8 +29,9 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Merhaba 👋</Text>
-          <Text style={styles.userName}>{user?.email ?? 'Gezgin'}</Text>
+          <Text style={styles.greeting}>
+            Merhaba, {user?.user_metadata?.full_name ?? 'Gezgin'} 👋
+          </Text>
         </View>
         <Pressable onPress={handleSignOut} disabled={isLoading}>
           <Text style={styles.signOutText}>Çıkış</Text>
