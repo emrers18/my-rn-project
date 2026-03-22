@@ -1,3 +1,6 @@
+22290093 Emre Ersin IOS İle Mobil Uygulama Geliştirme II Videolar = https://drive.google.com/drive/folders/1br2M1jA8csr6fabLjQOOSRT2euk5yu2e?usp=sharing
+
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
