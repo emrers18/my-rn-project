@@ -24,7 +24,7 @@ export default function ChatScreen() {
 
       {/* TODO: Faz 4'te GenUI & Gemini entegrasyonu burada yapılacak */}
       <View style={styles.inputBar}>
-        <Text style={styles.comingSoon}>💬 Sohbet motoru Faz 4'te gelecek</Text>
+        <Text style={styles.comingSoon}>💬 Sohbet motoru Faz 4&apos;te gelecek</Text>
       </View>
     </SafeAreaView>
   );
