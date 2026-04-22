@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
   ActivityIndicator,
@@ -10,11 +11,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuthStore } from '@/store/auth-store';
+import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { ChatSession } from '@/src/domain/entities/chat-session';
 import { useChatHistory } from '@/src/hooks/use-chat-history';
 import { useRealtimeChats } from '@/src/hooks/use-realtime-messages';
 import { getDependencies } from '@/src/lib/di';
-import { ChatSession } from '@/src/domain/entities/chat-session';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function HomeScreen() {
   const { user, signOut, isLoading } = useAuthStore();
@@ -28,7 +30,6 @@ export default function HomeScreen() {
     refetch,
   } = useChatHistory(userId);
 
-  // Realtime: chats tablosu değiştiğinde listeyi güncelle
   useRealtimeChats(userId);
 
   const handleSignOut = () => {
@@ -75,17 +76,18 @@ export default function HomeScreen() {
         <View>
           <Text style={styles.greeting}>Merhaba 👋</Text>
           <Text style={styles.userName}>
-            {user?.user_metadata?.full_name ?? user?.email ?? 'Gezgin'}
+            {user?.user_metadata?.full_name?.split(' ')[0] ??
+              user?.email?.split('@')[0] ??
+              'Gezgin'}
           </Text>
         </View>
-        <Pressable onPress={handleSignOut} disabled={isLoading}>
-          <Text style={styles.signOutText}>Çıkış</Text>
+        <Pressable onPress={handleSignOut} style={styles.profileButton} disabled={isLoading}>
+          <Text style={styles.profileIcon}>👤</Text>
         </Pressable>
       </View>
 
-      {/* Hero */}
+      {/* Hero Section */}
       <View style={styles.hero}>
-        <Text style={styles.heroEmoji}>✈️</Text>
         <Text style={styles.heroTitle}>Nereye gitmek istersin?</Text>
         <Text style={styles.heroSubtitle}>
           AI asistanın seyahat planını oluşturmana yardımcı olmaya hazır.
@@ -96,26 +98,32 @@ export default function HomeScreen() {
       <View style={styles.historySection}>
         <Text style={styles.sectionTitle}>Sohbet Geçmişi</Text>
 
-        {chatsLoading && <ActivityIndicator color='#3b82f6' style={{ marginTop: 16 }} />}
+        {chatsLoading && (
+          <ActivityIndicator color={Colors.light.primary} style={{ marginTop: 16 }} />
+        )}
 
         {chatsError && (
-          <Pressable onPress={() => refetch()}>
+          <Pressable onPress={() => refetch()} style={styles.errorContainer}>
             <Text style={styles.errorText}>Yüklenemedi. Tekrar dene →</Text>
           </Pressable>
         )}
 
         {!chatsLoading && !chatsError && (chats?.length ?? 0) === 0 && (
-          <Text style={styles.emptyText}>Henüz sohbet yok. İlk sohbeti başlat!</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Henüz sohbet yok. İlk sohbeti başlat!</Text>
+          </View>
         )}
 
         <FlatList
           data={chats ?? []}
           keyExtractor={(item) => item.id}
-          scrollEnabled={false}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <Pressable style={styles.chatItem} onPress={() => handleOpenChat(item)}>
               <View style={styles.chatItemLeft}>
-                <Text style={styles.chatIcon}>💬</Text>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.chatIcon}>💬</Text>
+                </View>
                 <View>
                   <Text style={styles.chatTitle} numberOfLines={1}>
                     {item.title}
@@ -126,74 +134,171 @@ export default function HomeScreen() {
               <Text style={styles.chevron}>›</Text>
             </Pressable>
           )}
+          contentContainerStyle={{ paddingBottom: 100 }}
         />
       </View>
 
-      {/* Yeni Sohbet Butonu */}
-      <View style={styles.actions}>
-        <Pressable style={styles.chatButton} onPress={handleNewChat}>
-          <Text style={styles.chatButtonText}>💬 Yeni Sohbet Başlat</Text>
-        </Pressable>
-      </View>
+      <Pressable style={styles.fabContainer} onPress={handleNewChat}>
+        <LinearGradient
+          colors={[Colors.light.primary, Colors.light.primaryContainer]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fab}
+        >
+          <Text style={styles.fabText}>💬 Yeni Sohbet Başlat</Text>
+        </LinearGradient>
+      </Pressable>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
-  greeting: { fontSize: 13, color: '#94a3b8' },
-  userName: { fontSize: 18, fontWeight: '700', color: '#f8fafc', marginTop: 2 },
-  signOutText: { color: '#ef4444', fontSize: 15, fontWeight: '600' },
-  hero: {
+  greeting: {
+    fontFamily: Typography.fonts.body,
+    fontSize: Typography.sizes.label,
+    color: Colors.light.icon,
+  },
+  userName: {
+    fontFamily: Typography.fonts.heading,
+    fontSize: Typography.sizes.h2,
+    color: Colors.light.text,
+    marginTop: 2,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: Roundness.full,
+    backgroundColor: Colors.light.surfaceContainer,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 28,
-    gap: 8,
   },
-  heroEmoji: { fontSize: 56 },
+  profileIcon: {
+    fontSize: 20,
+  },
+  hero: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xl,
+    gap: Spacing.xs,
+  },
   heroTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#f8fafc',
-    textAlign: 'center',
+    fontFamily: Typography.fonts.heading,
+    fontSize: Typography.sizes.display,
+    color: Colors.light.text,
+    lineHeight: 40,
     letterSpacing: -0.5,
   },
-  heroSubtitle: { fontSize: 15, color: '#94a3b8', textAlign: 'center', lineHeight: 22 },
+  heroSubtitle: {
+    fontFamily: Typography.fonts.body,
+    fontSize: Typography.sizes.body,
+    color: Colors.light.icon,
+    lineHeight: 22,
+    marginTop: Spacing.xs,
+  },
   historySection: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: Spacing.lg,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#f8fafc', marginBottom: 12 },
-  emptyText: { color: '#475569', fontSize: 14, textAlign: 'center', marginTop: 12 },
-  errorText: { color: '#ef4444', fontSize: 14, marginTop: 8 },
+  sectionTitle: {
+    fontFamily: Typography.fonts.heading,
+    fontSize: Typography.sizes.h2,
+    color: Colors.light.text,
+    marginBottom: Spacing.md,
+  },
+  emptyContainer: {
+    marginTop: Spacing.xl,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: Typography.fonts.body,
+    color: Colors.light.icon,
+    fontSize: Typography.sizes.body,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    marginTop: Spacing.md,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontFamily: Typography.fonts.body,
+    color: Colors.light.error,
+    fontSize: Typography.sizes.body,
+  },
   chatItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
+    backgroundColor: Colors.light.surfaceContainerLow,
+    borderRadius: Roundness.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  chatItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  chatIcon: { fontSize: 20 },
-  chatTitle: { color: '#f8fafc', fontSize: 15, fontWeight: '600', maxWidth: 220 },
-  chatDate: { color: '#64748b', fontSize: 12, marginTop: 2 },
-  chevron: { color: '#475569', fontSize: 20 },
-  actions: { paddingHorizontal: 24, paddingBottom: 32 },
-  chatButton: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 16,
-    paddingVertical: 18,
+  chatItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: Roundness.md,
+    backgroundColor: Colors.light.background,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  chatButtonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  chatIcon: {
+    fontSize: 18,
+  },
+  chatTitle: {
+    fontFamily: Typography.fonts.label,
+    color: Colors.light.text,
+    fontSize: Typography.sizes.body,
+    fontWeight: '600',
+    maxWidth: 220,
+  },
+  chatDate: {
+    fontFamily: Typography.fonts.body,
+    color: Colors.light.icon,
+    fontSize: Typography.sizes.caption,
+    marginTop: 2,
+  },
+  chevron: {
+    color: Colors.light.outline,
+    fontSize: 24,
+    fontFamily: Typography.fonts.body,
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: Spacing.xl,
+    left: Spacing.lg,
+    right: Spacing.lg,
+    elevation: 8,
+    shadowColor: Colors.light.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
+  fab: {
+    borderRadius: Roundness.full,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabText: {
+    fontFamily: Typography.fonts.heading,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
 });

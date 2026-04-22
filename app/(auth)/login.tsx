@@ -1,17 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function LoginScreen() {
@@ -19,6 +23,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const { signIn, isLoading } = useAuthStore();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -34,125 +39,259 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.inner}>
-        <View style={styles.header}>
-          <Text style={styles.emoji}>✈️</Text>
-          <Text style={styles.title}>TravelBot</Text>
-          <Text style={styles.subtitle}>Seyahat asistanına hoş geldin</Text>
+    <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={[styles.inner, { paddingTop: insets.top + 60 }]}>
+          {/* Header Section */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoEmoji}>✈️</Text>
+            </View>
+            <Text style={styles.title}>Hoş Geldin!</Text>
+            <Text style={styles.subtitle}>Seyahat macerana kaldığın yerden devam et.</Text>
+          </View>
+
+          {/* Form Section */}
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name='mail-outline'
+                size={20}
+                color={Colors.light.icon}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder='E-posta Adresin'
+                placeholderTextColor={Colors.light.icon + '80'}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize='none'
+                keyboardType='email-address'
+                autoComplete='email'
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name='lock-closed-outline'
+                size={20}
+                color={Colors.light.icon}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder='Şifren'
+                placeholderTextColor={Colors.light.icon + '80'}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete='password'
+              />
+            </View>
+
+            <Pressable style={styles.forgotPassword}>
+              <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleSignIn}
+              disabled={isLoading}
+              style={({ pressed }) => [
+                styles.buttonWrapper,
+                pressed && { opacity: 0.9 },
+                isLoading && styles.buttonDisabled,
+              ]}
+            >
+              <LinearGradient
+                colors={[Colors.light.primary, Colors.light.primaryContainer]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.button}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color='#fff' />
+                ) : (
+                  <>
+                    <Text style={styles.buttonText}>Giriş Yap</Text>
+                    <Ionicons name='arrow-forward' size={20} color='#fff' />
+                  </>
+                )}
+              </LinearGradient>
+            </Pressable>
+          </View>
+
+          {/* Footer Section */}
+          <View style={styles.footer}>
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>VEYA</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <View style={styles.socialRow}>
+              <Pressable style={styles.socialBtn}>
+                <Ionicons name='logo-google' size={24} color={Colors.light.text} />
+              </Pressable>
+              <Pressable style={styles.socialBtn}>
+                <Ionicons name='logo-apple' size={24} color={Colors.light.text} />
+              </Pressable>
+            </View>
+
+            <Pressable onPress={() => router.push('/(auth)/register')} style={styles.registerLink}>
+              <Text style={styles.footerText}>
+                Henüz hesabın yok mu? <Text style={styles.footerLinkBold}>Kayıt Ol</Text>
+              </Text>
+            </Pressable>
+          </View>
         </View>
-
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder='E-posta adresin'
-            placeholderTextColor='#94a3b8'
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize='none'
-            keyboardType='email-address'
-            autoComplete='email'
-          />
-          <TextInput
-            style={styles.input}
-            placeholder='Şifren'
-            placeholderTextColor='#94a3b8'
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete='password'
-          />
-
-          <Pressable
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSignIn}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color='#fff' />
-            ) : (
-              <Text style={styles.buttonText}>Giriş Yap</Text>
-            )}
-          </Pressable>
-        </View>
-
-        <Pressable onPress={() => router.push('/(auth)/register')}>
-          <Text style={styles.linkText}>
-            Hesabın yok mu? <Text style={styles.linkHighlight}>Kayıt Ol</Text>
-          </Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: Colors.light.background,
   },
   inner: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    gap: 32,
+    paddingHorizontal: Spacing.lg,
   },
   header: {
     alignItems: 'center',
-    gap: 8,
+    marginBottom: Spacing.xxl,
   },
-  emoji: {
-    fontSize: 56,
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: Roundness.xl,
+    backgroundColor: Colors.light.surfaceContainer,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+    // Tonal Layering Shadow
+    shadowColor: Colors.light.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  logoEmoji: {
+    fontSize: 40,
   },
   title: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#f8fafc',
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#94a3b8',
+    fontSize: Typography.sizes.display,
+    fontFamily: Typography.fonts.heading,
+    color: Colors.light.text,
     textAlign: 'center',
   },
+  subtitle: {
+    fontSize: Typography.sizes.body,
+    fontFamily: Typography.fonts.body,
+    color: Colors.light.icon,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+  },
   form: {
-    gap: 12,
+    gap: Spacing.md,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.surfaceContainerLow,
+    borderRadius: Roundness.xl,
+    paddingHorizontal: Spacing.md,
+    height: 60,
+  },
+  inputIcon: {
+    marginRight: Spacing.sm,
   },
   input: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#334155',
+    flex: 1,
+    fontSize: Typography.sizes.body,
+    fontFamily: Typography.fonts.body,
+    color: Colors.light.text,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: -Spacing.xs,
+  },
+  forgotPasswordText: {
+    fontSize: Typography.sizes.caption,
+    fontFamily: Typography.fonts.label,
+    color: Colors.light.primary,
+  },
+  buttonWrapper: {
+    marginTop: Spacing.md,
   },
   button: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 12,
-    paddingVertical: 16,
+    height: 60,
+    borderRadius: Roundness.full,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
+    gap: Spacing.xs,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: Typography.sizes.body,
+    fontFamily: Typography.fonts.bodyBold,
   },
-  linkText: {
-    textAlign: 'center',
-    color: '#94a3b8',
-    fontSize: 15,
+  footer: {
+    marginTop: 'auto',
+    marginBottom: Spacing.xxl,
+    alignItems: 'center',
+    gap: Spacing.lg,
   },
-  linkHighlight: {
-    color: '#3b82f6',
-    fontWeight: '600',
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.xxl,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.light.surfaceContainer,
+  },
+  dividerText: {
+    fontSize: 12,
+    fontFamily: Typography.fonts.label,
+    color: Colors.light.icon,
+    letterSpacing: 1,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    gap: Spacing.lg,
+  },
+  socialBtn: {
+    width: 60,
+    height: 60,
+    borderRadius: Roundness.full,
+    backgroundColor: Colors.light.surfaceContainerLow,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.light.surfaceContainer,
+  },
+  registerLink: {
+    marginTop: Spacing.md,
+  },
+  footerText: {
+    fontSize: Typography.sizes.body,
+    fontFamily: Typography.fonts.body,
+    color: Colors.light.icon,
+  },
+  footerLinkBold: {
+    color: Colors.light.primary,
+    fontFamily: Typography.fonts.bodyBold,
   },
 });

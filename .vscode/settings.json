@@ -3,5 +3,12 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
+  },
+  // Deno language server — supabase/functions klasörü için aktif
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.unstable": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
+

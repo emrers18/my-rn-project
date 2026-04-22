@@ -1,0 +1,12 @@
+{
+  "tasks": {
+    "deploy": {
+      "command": "supabase functions deploy gemini-chat",
+      "description": "Deploy gemini-chat edge function"
+    }
+  },
+  "imports": {
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2",
+    "@supabase/functions-js/edge-runtime.d.ts": "jsr:@supabase/functions-js/edge-runtime.d.ts"
+  }
+}
