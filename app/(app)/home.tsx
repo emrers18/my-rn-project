@@ -114,11 +114,11 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <FlatList
+        <FlatList<ChatSession>
           data={chats ?? []}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: ChatSession) => item.id}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
+          renderItem={({ item }: { item: ChatSession }) => (
             <Pressable style={styles.chatItem} onPress={() => handleOpenChat(item)}>
               <View style={styles.chatItemLeft}>
                 <View style={styles.iconContainer}>
