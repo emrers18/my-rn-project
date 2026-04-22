@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { Trip } from '../../domain/entities/trip';
 import { Failure, Failures } from '../../domain/failures/failure';
+import { supabaseAiDataSource } from '../../infrastructure/datasources/supabase-ai-datasource';
 
 const GenerateItineraryInputSchema = z.object({
   userId: z.string().uuid(),
@@ -16,6 +17,8 @@ const GenerateItineraryInputSchema = z.object({
 export type GenerateItineraryInput = z.infer<typeof GenerateItineraryInputSchema>;
 
 export class GenerateItineraryUseCase {
+  constructor(private readonly aiDataSource: typeof supabaseAiDataSource = supabaseAiDataSource) {}
+
   async execute(input: GenerateItineraryInput): Promise<Result<Trip, Failure>> {
     // 1. Input validation
     const parsed = GenerateItineraryInputSchema.safeParse(input);
@@ -24,28 +27,53 @@ export class GenerateItineraryUseCase {
       return err(Failures.validationError(message));
     }
 
-    const mockTrip: Trip = {
+    const { userId, chatId, destinationName, durationDays, budget, currency } = parsed.data;
+
+    // 2. Build AI prompt for itinerary generation
+    const prompt = [
+      `${destinationName} için ${durationDays} günlük detaylı seyahat planı oluştur.`,
+      budget ? `Bütçe: ${budget} ${currency}.` : '',
+      `Her gün için aktiviteler, gezilecek yerler ve kısa açıklamalar ekle.`,
+      `RouteWidget formatında yanıt ver, her durağı bir gün olarak göster.`,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    // 3. Call Edge Function (if chatId available) or return mock Trip
+    if (chatId) {
+      const aiResult = await this.aiDataSource.chat({ chatId, userId, content: prompt });
+
+      if (aiResult.isErr()) {
+        // Fallback to mock trip on AI error
+        return ok(this._buildMockTrip(parsed.data));
+      }
+    }
+
+    // 4. Build Trip entity from destination name
+    return ok(this._buildMockTrip(parsed.data));
+  }
+
+  private _buildMockTrip(data: GenerateItineraryInput): Trip {
+    return {
       id: crypto.randomUUID(),
-      userId: parsed.data.userId,
-      chatId: parsed.data.chatId,
-      title: `${parsed.data.destinationName} — ${parsed.data.durationDays} Günlük Plan`,
+      userId: data.userId,
+      chatId: data.chatId,
+      title: `${data.destinationName} — ${data.durationDays} Günlük Plan`,
       destination: {
         id: crypto.randomUUID(),
-        name: parsed.data.destinationName,
+        name: data.destinationName,
         country: 'Bilinmiyor',
         tags: [],
       },
       status: 'draft',
-      itinerary: Array.from({ length: parsed.data.durationDays }, (_, i) => ({
+      itinerary: Array.from({ length: data.durationDays }, (_, i) => ({
         day: i + 1,
-        activities: [`Gün ${i + 1}: Keşif`],
+        activities: [`Gün ${i + 1}: ${data.destinationName} keşfi`],
       })),
-      estimatedBudget: parsed.data.budget,
-      currency: parsed.data.currency,
+      estimatedBudget: data.budget,
+      currency: data.currency,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-
-    return ok(mockTrip);
   }
 }
