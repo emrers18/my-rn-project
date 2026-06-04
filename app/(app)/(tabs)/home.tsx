@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
@@ -9,19 +10,25 @@ import {
   Text,
   View,
 } from 'react-native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SwipeableChatItem } from '@/components/swipeable-chat-item';
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
 import { ChatSession } from '@/src/domain/entities/chat-session';
 import { useChatHistory } from '@/src/hooks/use-chat-history';
+import { useDeleteChat } from '@/src/hooks/use-delete-chat';
+import { useProfile } from '@/src/hooks/use-profile';
 import { useRealtimeChats } from '@/src/hooks/use-realtime-messages';
 import { getDependencies } from '@/src/lib/di';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function HomeScreen() {
-  const { user, signOut, isLoading } = useAuthStore();
+  const { user } = useAuthStore();
   const router = useRouter();
   const userId = user?.id ?? null;
+
+  const { data: profile } = useProfile(userId);
 
   const {
     data: chats,
@@ -30,24 +37,9 @@ export default function HomeScreen() {
     refetch,
   } = useChatHistory(userId);
 
-  useRealtimeChats(userId);
+  const { mutate: deleteChat } = useDeleteChat(userId);
 
-  const handleSignOut = () => {
-    Alert.alert('Çıkış Yap', 'Çıkış yapmak istediğinden emin misin?', [
-      { text: 'İptal', style: 'cancel' },
-      {
-        text: 'Çıkış Yap',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch {
-            Alert.alert('Hata', 'Çıkış yapılırken bir sorun oluştu.');
-          }
-        },
-      },
-    ]);
-  };
+  useRealtimeChats(userId);
 
   const handleNewChat = async () => {
     if (!userId) return;
@@ -64,6 +56,12 @@ export default function HomeScreen() {
     router.push({ pathname: '/(app)/chat', params: { chatId: chat.id } });
   };
 
+  const handleDeleteChat = (chatId: string) => {
+    deleteChat(chatId, {
+      onError: () => Alert.alert('Hata', 'Sohbet silinemedi. Lütfen tekrar dene.'),
+    });
+  };
+
   function formatDate(iso: string) {
     const d = new Date(iso);
     return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
@@ -76,23 +74,28 @@ export default function HomeScreen() {
         <View>
           <Text style={styles.greeting}>Merhaba 👋</Text>
           <Text style={styles.userName}>
-            {user?.user_metadata?.full_name?.split(' ')[0] ??
+            {profile?.fullName?.split(' ')[0] ??
+              user?.user_metadata?.full_name?.split(' ')[0] ??
               user?.email?.split('@')[0] ??
               'Gezgin'}
           </Text>
         </View>
-        <Pressable onPress={handleSignOut} style={styles.profileButton} disabled={isLoading}>
-          <Text style={styles.profileIcon}>👤</Text>
+        <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+          {profile?.avatarUrl ? (
+            <Image source={{ uri: profile.avatarUrl }} style={styles.profileImage} />
+          ) : (
+            <Text style={styles.profileIcon}>👤</Text>
+          )}
         </Pressable>
       </View>
 
       {/* Hero Section */}
-      <View style={styles.hero}>
+      <Animated.View entering={FadeIn.duration(500)} style={styles.hero}>
         <Text style={styles.heroTitle}>Nereye gitmek istersin?</Text>
         <Text style={styles.heroSubtitle}>
           AI asistanın seyahat planını oluşturmana yardımcı olmaya hazır.
         </Text>
-      </View>
+      </Animated.View>
 
       {/* Sohbet Geçmişi */}
       <View style={styles.historySection}>
@@ -109,30 +112,24 @@ export default function HomeScreen() {
         )}
 
         {!chatsLoading && !chatsError && (chats?.length ?? 0) === 0 && (
-          <View style={styles.emptyContainer}>
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.emptyContainer}>
+            <Text style={styles.emptyEmoji}>🗺️</Text>
             <Text style={styles.emptyText}>Henüz sohbet yok. İlk sohbeti başlat!</Text>
-          </View>
+          </Animated.View>
         )}
 
         <FlatList<ChatSession>
           data={chats ?? []}
           keyExtractor={(item: ChatSession) => item.id}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }: { item: ChatSession }) => (
-            <Pressable style={styles.chatItem} onPress={() => handleOpenChat(item)}>
-              <View style={styles.chatItemLeft}>
-                <View style={styles.iconContainer}>
-                  <Text style={styles.chatIcon}>💬</Text>
-                </View>
-                <View>
-                  <Text style={styles.chatTitle} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.chatDate}>{formatDate(item.updatedAt)}</Text>
-                </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
+          renderItem={({ item, index }: { item: ChatSession; index: number }) => (
+            <SwipeableChatItem
+              chat={item}
+              index={index}
+              onPress={handleOpenChat}
+              onDelete={handleDeleteChat}
+              formatDate={formatDate}
+            />
           )}
           contentContainerStyle={{ paddingBottom: 100 }}
         />
@@ -183,9 +180,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.surfaceContainer,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   profileIcon: {
     fontSize: 20,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
   },
   hero: {
     paddingHorizontal: Spacing.lg,
@@ -219,6 +221,10 @@ const styles = StyleSheet.create({
   emptyContainer: {
     marginTop: Spacing.xl,
     alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  emptyEmoji: {
+    fontSize: 48,
   },
   emptyText: {
     fontFamily: Typography.fonts.body,
@@ -234,50 +240,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fonts.body,
     color: Colors.light.error,
     fontSize: Typography.sizes.body,
-  },
-  chatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.light.surfaceContainerLow,
-    borderRadius: Roundness.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  chatItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: Roundness.md,
-    backgroundColor: Colors.light.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chatIcon: {
-    fontSize: 18,
-  },
-  chatTitle: {
-    fontFamily: Typography.fonts.label,
-    color: Colors.light.text,
-    fontSize: Typography.sizes.body,
-    fontWeight: '600',
-    maxWidth: 220,
-  },
-  chatDate: {
-    fontFamily: Typography.fonts.body,
-    color: Colors.light.icon,
-    fontSize: Typography.sizes.caption,
-    marginTop: 2,
-  },
-  chevron: {
-    color: Colors.light.outline,
-    fontSize: 24,
-    fontFamily: Typography.fonts.body,
   },
   fabContainer: {
     position: 'absolute',

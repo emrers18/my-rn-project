@@ -16,11 +16,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const { signIn, isLoading } = useAuthStore();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -35,6 +37,28 @@ export default function LoginScreen() {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Giriş yapılamadı.';
       Alert.alert('Giriş Hatası', message);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      Alert.alert('Hata', 'Lütfen önce e-posta adresini gir.');
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail);
+      if (error) throw error;
+      Alert.alert(
+        'Başarılı ✅',
+        'Şifre sıfırlama bağlantısı e-postana gönderildi. Spam klasörünü de kontrol etmeyi unutma.'
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Bir hata oluştu.';
+      Alert.alert('Hata', message);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -93,8 +117,14 @@ export default function LoginScreen() {
               />
             </View>
 
-            <Pressable style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
+            <Pressable
+              style={styles.forgotPassword}
+              onPress={handleForgotPassword}
+              disabled={isResetting}
+            >
+              <Text style={styles.forgotPasswordText}>
+                {isResetting ? 'Gönderiliyor…' : 'Şifremi Unuttum'}
+              </Text>
             </Pressable>
 
             <Pressable

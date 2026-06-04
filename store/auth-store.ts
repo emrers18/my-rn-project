@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signUp: async (email: string, password: string, fullName?: string) => {
     set({ isLoading: true });
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -53,6 +53,18 @@ export const useAuthStore = create<AuthState>((set) => ({
         },
       });
       if (error) throw error;
+
+      // Profil kaydı oluştur (upsert — DB trigger varsa çakışma yaratmaz)
+      if (data.user) {
+        await supabase.from('profiles').upsert(
+          {
+            id: data.user.id,
+            email: email,
+            full_name: fullName ?? null,
+          } as never,
+          { onConflict: 'id' }
+        );
+      }
     } finally {
       set({ isLoading: false });
     }

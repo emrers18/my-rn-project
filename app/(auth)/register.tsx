@@ -39,8 +39,8 @@ export default function RegisterScreen() {
       await signUp(email.trim().toLowerCase(), password, fullName.trim());
       Alert.alert(
         'Hoş geldin! 🎉',
-        'TravelBot ile seyahat planlamalarını Yapay Zeka Destekli asistanın ile hızlıca yapabilirsin.',
-        [{ text: 'Tamam', onPress: () => router.replace('/(auth)/login') }]
+        'Kayıt başarılı! E-posta adresine gönderilen doğrulama bağlantısını kontrol et.',
+        [{ text: 'Tamam' }]
       );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Kayıt olunamadı.';

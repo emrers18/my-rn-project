@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Message } from '../domain/entities/message';
 import { supabaseAiDataSource } from '../infrastructure/datasources/supabase-ai-datasource';
+import { getDependencies } from '../lib/di';
 import { CHAT_HISTORY_QUERY_KEY } from './use-chat-history';
 import { MESSAGES_QUERY_KEY } from './use-messages';
 
@@ -73,10 +74,17 @@ export function useAiChat() {
       }
     },
 
-    // Başarı: cache'i tazele
-    onSuccess: (_data, vars) => {
+    // Başarı: cache'i tazele + sohbet başlığını güncelle
+    onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: MESSAGES_QUERY_KEY(vars.chatId) });
       queryClient.invalidateQueries({ queryKey: CHAT_HISTORY_QUERY_KEY(vars.userId) });
+
+      // AI yanıtından sohbet başlığı derive et
+      const aiContent = data.aiMessage.content;
+      if (aiContent) {
+        const title = aiContent.length > 40 ? aiContent.substring(0, 40) + '…' : aiContent;
+        getDependencies().chatRepository.updateChat(vars.chatId, { title });
+      }
     },
   });
 }
