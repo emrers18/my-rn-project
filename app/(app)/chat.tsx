@@ -43,7 +43,10 @@ function TypingIndicator() {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ChatScreen() {
   const router = useRouter();
-  const { chatId } = useLocalSearchParams<{ chatId: string }>();
+  const { chatId, initialPrompt } = useLocalSearchParams<{
+    chatId: string;
+    initialPrompt?: string;
+  }>();
   const { user } = useAuthStore();
   const [inputText, setInputText] = useState('');
   const listRef = useRef<FlatList>(null);
@@ -62,6 +65,30 @@ export default function ChatScreen() {
   useRealtimeMessages(chatId ?? null, userId);
 
   const messages = data?.messages ?? [];
+  const hasSentInitialPrompt = useRef(false);
+
+  useEffect(() => {
+    if (
+      initialPrompt &&
+      !isLoading &&
+      messages.length === 0 &&
+      !isSending &&
+      userId &&
+      chatId &&
+      !hasSentInitialPrompt.current
+    ) {
+      hasSentInitialPrompt.current = true;
+      sendAiMessage(
+        { chatId, userId, content: initialPrompt },
+        {
+          onError: () => {
+            hasSentInitialPrompt.current = false;
+            Alert.alert('Hata', 'Mesaj gönderilemedi. Lütfen tekrar dene.');
+          },
+        }
+      );
+    }
+  }, [initialPrompt, isLoading, messages.length, isSending, userId, chatId, sendAiMessage]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -138,70 +165,71 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
-        </Pressable>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {chatId ? 'TravelBot Assistant' : 'Yeni Sohbet'}
-          </Text>
-          <View style={[styles.statusDot, isSending && styles.statusDotActive]} />
-        </View>
-        <View style={{ width: 44 }} />
-      </View>
-
-      {/* Mesaj Listesi */}
-      {isLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} size='large' />
-          <Text style={styles.loadingText}>Sohbet yükleniyor…</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorEmoji}>😞</Text>
-          <Text style={styles.errorText}>Mesajlar yüklenemedi.</Text>
-        </View>
-      ) : messages.length === 0 && !isSending ? (
-        <View style={styles.centered}>
-          <Text style={styles.emptyEmoji}>🗺️</Text>
-          <Text style={styles.emptyTitle}>{'TravelBot\u0027a Sor'}</Text>
-          <Text style={styles.emptySubtitle}>
-            Destinasyon, otel, uçuş veya rota hakkında her şeyi sorabilirsin!
-          </Text>
-          <View style={styles.suggestionRow}>
-            {["Roma'da butik otel", 'Paris rotası', 'İstanbul → Barcelona uçuşu'].map((s) => (
-              <Pressable key={s} style={styles.suggestionChip} onPress={() => setInputText(s)}>
-                <Text style={styles.suggestionText}>{s}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      ) : (
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messageList}
-          onStartReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
-          onStartReachedThreshold={0.1}
-          ListHeaderComponent={
-            isFetchingNextPage ? (
-              <ActivityIndicator color={colors.icon} style={{ marginBottom: 8 }} />
-            ) : null
-          }
-          ListFooterComponent={isSending ? <TypingIndicator /> : null}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-
-      {/* Input Bar */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backText}>‹</Text>
+          </Pressable>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {chatId ? 'TravelBot Assistant' : 'Yeni Sohbet'}
+            </Text>
+            <View style={[styles.statusDot, isSending && styles.statusDotActive]} />
+          </View>
+          <View style={{ width: 44 }} />
+        </View>
+
+        {/* Mesaj Listesi */}
+        {isLoading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator color={colors.primary} size='large' />
+            <Text style={styles.loadingText}>Sohbet yükleniyor…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centered}>
+            <Text style={styles.errorEmoji}>😞</Text>
+            <Text style={styles.errorText}>Mesajlar yüklenemedi.</Text>
+          </View>
+        ) : messages.length === 0 && !isSending ? (
+          <View style={styles.centered}>
+            <Text style={styles.emptyEmoji}>🗺️</Text>
+            <Text style={styles.emptyTitle}>{'TravelBot\u0027a Sor'}</Text>
+            <Text style={styles.emptySubtitle}>
+              Destinasyon, otel, uçuş veya rota hakkında her şeyi sorabilirsin!
+            </Text>
+            <View style={styles.suggestionRow}>
+              {["Roma'da butik otel", 'Paris rotası', 'İstanbul → Barcelona uçuşu'].map((s) => (
+                <Pressable key={s} style={styles.suggestionChip} onPress={() => setInputText(s)}>
+                  <Text style={styles.suggestionText}>{s}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.messageList}
+            onStartReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+            onStartReachedThreshold={0.1}
+            ListHeaderComponent={
+              isFetchingNextPage ? (
+                <ActivityIndicator color={colors.icon} style={{ marginBottom: 8 }} />
+              ) : null
+            }
+            ListFooterComponent={isSending ? <TypingIndicator /> : null}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+
+        {/* Input Bar */}
         <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           <TextInput
             style={styles.input}

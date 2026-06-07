@@ -83,8 +83,16 @@ export const supabaseAiDataSource = {
       });
 
       if (error) {
-        console.error('Edge Function Error:', error);
-        return err(Failures.serverError(`Edge Function hatası: ${error.message}`));
+        console.error('Edge Function Error detail:', {
+          message: error.message,
+          name: error.name,
+          status: 'status' in error ? (error as { status?: number }).status : undefined,
+        });
+        return err(
+          Failures.serverError(
+            `Edge Function hatası: ${error.message} (Status: ${'status' in error ? (error as { status?: number }).status : 'unknown'})`
+          )
+        );
       }
       if (!data?.userMessage || !data?.aiMessage) {
         return err(Failures.serverError('Geçersiz yanıt formatı.'));

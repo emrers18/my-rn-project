@@ -9,6 +9,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -24,6 +25,92 @@ import { useChatHistory } from '@/src/hooks/use-chat-history';
 import { useProfile, useUpdateProfile } from '@/src/hooks/use-profile';
 import { useAuthStore } from '@/store/auth-store';
 import { useThemeStore } from '@/store/theme-store';
+import { usePreferencesStore } from '@/store/preferences-store';
+
+const TRANSLATIONS = {
+  tr: {
+    profile: 'Profil',
+    chats: 'Sohbet',
+    membership: 'Üyelik',
+    account: 'Hesap',
+    editProfile: 'Profili Düzenle',
+    about: 'Hakkında',
+    appearance: 'Arayüz / Tema',
+    language: 'Dil',
+    currency: 'Para Birimi',
+    travelStyle: 'Seyahat Tarzı',
+    notifications: 'Bildirimler',
+    signOut: 'Çıkış Yap',
+    signingOut: 'Çıkış yapılıyor…',
+    confirmSignOutTitle: 'Çıkış Yap',
+    confirmSignOutMessage: 'Çıkış yapmak istediğinden emin misin?',
+    cancel: 'İptal',
+    save: 'Kaydet',
+    successTitle: 'Başarılı ✅',
+    profileUpdated: 'Profil bilgilerin güncellendi.',
+    avatarUpdated: 'Profil fotoğrafınız güncellendi.',
+    permissionRequired: 'İzin Gerekli',
+    galleryPermission: 'Galeriye erişmek için izin vermeniz gerekmektedir.',
+    errorTitle: 'Hata',
+    avatarUploadError: 'Profil fotoğrafı kaydedilemedi.',
+    photoUploadError: 'Fotoğraf yüklenirken bir hata oluştu.',
+    profileUpdateError: 'Profil güncellenemedi. Lütfen tekrar dene.',
+    signOutError: 'Çıkış yapılırken bir sorun oluştu.',
+    nameCannotBeEmpty: 'İsim boş bırakılamaz.',
+    loadingProfile: 'Profil yükleniyor…',
+    profileLoadError: 'Profil yüklenemedi.',
+    retry: 'Tekrar Dene →',
+    fullNamePlaceholder: 'Adın Soyadın',
+    systemTheme: 'Sistem',
+    lightTheme: 'Açık',
+    darkTheme: 'Koyu',
+    budgetStyle: 'Ekonomik',
+    standardStyle: 'Standart',
+    luxuryStyle: 'Lüks',
+    appName: 'TravelBot',
+  },
+  en: {
+    profile: 'Profile',
+    chats: 'Chats',
+    membership: 'Membership',
+    account: 'Account',
+    editProfile: 'Edit Profile',
+    about: 'About',
+    appearance: 'Theme / Mode',
+    language: 'Language',
+    currency: 'Currency',
+    travelStyle: 'Travel Style',
+    notifications: 'Notifications',
+    signOut: 'Sign Out',
+    signingOut: 'Signing out...',
+    confirmSignOutTitle: 'Sign Out',
+    confirmSignOutMessage: 'Are you sure you want to sign out?',
+    cancel: 'Cancel',
+    save: 'Save',
+    successTitle: 'Success ✅',
+    profileUpdated: 'Profile settings updated.',
+    avatarUpdated: 'Profile photo updated.',
+    permissionRequired: 'Permission Required',
+    galleryPermission: 'Permission to access gallery is required.',
+    errorTitle: 'Error',
+    avatarUploadError: 'Could not save profile photo.',
+    photoUploadError: 'An error occurred while uploading photo.',
+    profileUpdateError: 'Could not update profile. Please try again.',
+    signOutError: 'An error occurred while signing out.',
+    nameCannotBeEmpty: 'Name cannot be empty.',
+    loadingProfile: 'Loading profile...',
+    profileLoadError: 'Could not load profile.',
+    retry: 'Retry →',
+    fullNamePlaceholder: 'Full Name',
+    systemTheme: 'System',
+    lightTheme: 'Light',
+    darkTheme: 'Dark',
+    budgetStyle: 'Budget',
+    standardStyle: 'Standard',
+    luxuryStyle: 'Luxury',
+    appName: 'TravelBot',
+  },
+};
 
 // ─── Avatar Placeholder ───────────────────────────────────────────────────────
 
@@ -104,6 +191,18 @@ export default function ProfileScreen() {
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
   const { themeMode, setThemeMode } = useThemeStore();
+  const {
+    language,
+    currency,
+    travelStyle,
+    notificationsEnabled,
+    setLanguage,
+    setCurrency,
+    setTravelStyle,
+    setNotificationsEnabled,
+  } = usePreferencesStore();
+
+  const t = TRANSLATIONS[language];
 
   const {
     data: profile,
@@ -123,7 +222,7 @@ export default function ProfileScreen() {
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('İzin Gerekli', 'Galeriye erişmek için izin vermeniz gerekmektedir.');
+      Alert.alert(t.permissionRequired, t.galleryPermission);
       return;
     }
 
@@ -148,21 +247,21 @@ export default function ProfileScreen() {
         { userId, data: { avatarUrl: publicUrl } },
         {
           onSuccess: () => {
-            Alert.alert('Başarılı ✅', 'Profil fotoğrafınız güncellendi.');
+            Alert.alert(t.successTitle, t.avatarUpdated);
           },
           onError: (err) => {
             console.error('Profile update error:', err);
-            Alert.alert('Hata', 'Profil fotoğrafı kaydedilemedi.');
+            Alert.alert(t.errorTitle, t.avatarUploadError);
           },
         }
       );
     } catch (err) {
       console.error('Image picking/upload error:', err);
-      Alert.alert('Hata', 'Fotoğraf yüklenirken bir hata oluştu.');
+      Alert.alert(t.errorTitle, t.photoUploadError);
     } finally {
       setIsUploadingImage(false);
     }
-  }, [userId, updateProfile]);
+  }, [userId, updateProfile, t]);
 
   const displayName =
     profile?.fullName ?? user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? 'Gezgin';
@@ -172,7 +271,7 @@ export default function ProfileScreen() {
   const chatCount = chats?.length ?? 0;
 
   const memberSince = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString('tr-TR', {
+    ? new Date(user.created_at).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', {
         month: 'long',
         year: 'numeric',
       })
@@ -187,7 +286,7 @@ export default function ProfileScreen() {
     if (!userId) return;
     const trimmed = editName.trim();
     if (!trimmed) {
-      Alert.alert('Hata', 'İsim boş bırakılamaz.');
+      Alert.alert(t.errorTitle, t.nameCannotBeEmpty);
       return;
     }
     if (trimmed === displayName) {
@@ -199,14 +298,14 @@ export default function ProfileScreen() {
       {
         onSuccess: () => {
           setIsEditing(false);
-          Alert.alert('Başarılı ✅', 'Profil bilgilerin güncellendi.');
+          Alert.alert(t.successTitle, t.profileUpdated);
         },
         onError: () => {
-          Alert.alert('Hata', 'Profil güncellenemedi. Lütfen tekrar dene.');
+          Alert.alert(t.errorTitle, t.profileUpdateError);
         },
       }
     );
-  }, [userId, editName, displayName, updateProfile]);
+  }, [userId, editName, displayName, updateProfile, t]);
 
   const handleCancelEdit = useCallback(() => {
     setIsEditing(false);
@@ -214,40 +313,40 @@ export default function ProfileScreen() {
   }, []);
 
   const handleSignOut = useCallback(() => {
-    Alert.alert('Çıkış Yap', 'Çıkış yapmak istediğinden emin misin?', [
-      { text: 'İptal', style: 'cancel' },
+    Alert.alert(t.confirmSignOutTitle, t.confirmSignOutMessage, [
+      { text: t.cancel, style: 'cancel' },
       {
-        text: 'Çıkış Yap',
+        text: t.signOut,
         style: 'destructive',
         onPress: async () => {
           try {
             await signOut();
           } catch {
-            Alert.alert('Hata', 'Çıkış yapılırken bir sorun oluştu.');
+            Alert.alert(t.errorTitle, t.signOutError);
           }
         },
       },
     ]);
-  }, [signOut]);
+  }, [signOut, t]);
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profil</Text>
+        <Text style={styles.headerTitle}>{t.profile}</Text>
       </View>
 
       {isProfileLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} size='large' />
-          <Text style={styles.loadingText}>Profil yükleniyor…</Text>
+          <Text style={styles.loadingText}>{t.loadingProfile}</Text>
         </View>
       ) : profileError ? (
         <View style={styles.centered}>
           <Text style={styles.errorEmoji}>😞</Text>
-          <Text style={styles.errorText}>Profil yüklenemedi.</Text>
+          <Text style={styles.errorText}>{t.profileLoadError}</Text>
           <Pressable onPress={() => refetchProfile()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Tekrar Dene →</Text>
+            <Text style={styles.retryText}>{t.retry}</Text>
           </Pressable>
         </View>
       ) : (
@@ -282,7 +381,7 @@ export default function ProfileScreen() {
                   style={styles.editInput}
                   value={editName}
                   onChangeText={setEditName}
-                  placeholder='Adın Soyadın'
+                  placeholder={t.fullNamePlaceholder}
                   placeholderTextColor={colors.icon + '80'}
                   autoFocus
                   maxLength={50}
@@ -292,7 +391,7 @@ export default function ProfileScreen() {
                     style={[styles.editBtn, styles.editBtnCancel]}
                     onPress={handleCancelEdit}
                   >
-                    <Text style={styles.editBtnCancelText}>İptal</Text>
+                    <Text style={styles.editBtnCancelText}>{t.cancel}</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.editBtn, styles.editBtnSave]}
@@ -302,7 +401,7 @@ export default function ProfileScreen() {
                     {isUpdating ? (
                       <ActivityIndicator color='#fff' size='small' />
                     ) : (
-                      <Text style={styles.editBtnSaveText}>Kaydet</Text>
+                      <Text style={styles.editBtnSaveText}>{t.save}</Text>
                     )}
                   </Pressable>
                 </View>
@@ -317,35 +416,36 @@ export default function ProfileScreen() {
 
           {/* Stats */}
           <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.statsRow}>
-            <StatCard icon='💬' value={String(chatCount)} label='Sohbet' />
-            <StatCard icon='📅' value={memberSince} label='Üyelik' />
+            <StatCard icon='💬' value={String(chatCount)} label={t.chats} />
+            <StatCard icon='📅' value={memberSince} label={t.membership} />
           </Animated.View>
 
           {/* Menu */}
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>Hesap</Text>
+            <Text style={styles.menuSectionTitle}>{t.account}</Text>
 
             <View style={styles.menuGroup}>
-              <MenuItem icon='create-outline' label='Profili Düzenle' onPress={handleStartEdit} />
+              <MenuItem icon='create-outline' label={t.editProfile} onPress={handleStartEdit} />
               <View style={styles.menuDivider} />
               <MenuItem
                 icon='information-circle-outline'
-                label='Hakkında'
-                onPress={() => Alert.alert('TravelBot')}
+                label={t.about}
+                onPress={() => Alert.alert(t.appName)}
               />
             </View>
 
-            <Text style={[styles.menuSectionTitle, { marginTop: Spacing.md }]}>Uygulama</Text>
+            <Text style={[styles.menuSectionTitle, { marginTop: Spacing.md }]}>{t.appearance}</Text>
             <View style={styles.menuGroup}>
+              {/* Tema Seçici */}
               <View style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm }}>
-                <Text style={styles.menuLabel}>Görünüm</Text>
+                <Text style={styles.menuLabel}>{t.appearance}</Text>
                 <View style={styles.themeSelectorContainer}>
                   {(['system', 'light', 'dark'] as const).map((mode) => {
                     const isActive = themeMode === mode;
                     const labels = {
-                      system: 'Sistem',
-                      light: 'Açık',
-                      dark: 'Koyu',
+                      system: t.systemTheme,
+                      light: t.lightTheme,
+                      dark: t.darkTheme,
                     };
                     return (
                       <Pressable
@@ -363,12 +463,110 @@ export default function ProfileScreen() {
                   })}
                 </View>
               </View>
+
+              <View style={styles.menuDivider} />
+
+              {/* Dil Seçici */}
+              <View style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm }}>
+                <Text style={styles.menuLabel}>{t.language}</Text>
+                <View style={styles.themeSelectorContainer}>
+                  {[
+                    { code: 'tr', label: 'TR' },
+                    { code: 'en', label: 'EN' },
+                  ].map((lang) => {
+                    const isActive = language === lang.code;
+                    return (
+                      <Pressable
+                        key={lang.code}
+                        style={[styles.themeOption, isActive && styles.themeOptionActive]}
+                        onPress={() => setLanguage(lang.code as 'tr' | 'en')}
+                      >
+                        <Text
+                          style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}
+                        >
+                          {lang.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.menuDivider} />
+
+              {/* Para Birimi Seçici */}
+              <View style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm }}>
+                <Text style={styles.menuLabel}>{t.currency}</Text>
+                <View style={styles.themeSelectorContainer}>
+                  {(['TRY', 'USD', 'EUR'] as const).map((curr) => {
+                    const isActive = currency === curr;
+                    return (
+                      <Pressable
+                        key={curr}
+                        style={[styles.themeOption, isActive && styles.themeOptionActive]}
+                        onPress={() => setCurrency(curr)}
+                      >
+                        <Text
+                          style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}
+                        >
+                          {curr}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.menuDivider} />
+
+              {/* Seyahat Tarzı Seçici */}
+              <View style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm }}>
+                <Text style={styles.menuLabel}>{t.travelStyle}</Text>
+                <View style={styles.themeSelectorContainer}>
+                  {[
+                    { code: 'budget', label: t.budgetStyle },
+                    { code: 'standard', label: t.standardStyle },
+                    { code: 'luxury', label: t.luxuryStyle },
+                  ].map((styleOpt) => {
+                    const isActive = travelStyle === styleOpt.code;
+                    return (
+                      <Pressable
+                        key={styleOpt.code}
+                        style={[styles.themeOption, isActive && styles.themeOptionActive]}
+                        onPress={() =>
+                          setTravelStyle(styleOpt.code as 'budget' | 'standard' | 'luxury')
+                        }
+                      >
+                        <Text
+                          style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}
+                        >
+                          {styleOpt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.menuDivider} />
+
+              {/* Bildirim Anahtarı */}
+              <View style={styles.switchRow}>
+                <Text style={styles.menuLabel}>{t.notifications}</Text>
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={setNotificationsEnabled}
+                  trackColor={{ false: colors.surfaceContainer, true: colors.primaryContainer }}
+                  thumbColor={notificationsEnabled ? colors.primary : colors.outline}
+                  ios_backgroundColor={colors.surfaceContainer}
+                />
+              </View>
             </View>
 
             <View style={[styles.menuGroup, { marginTop: Spacing.md }]}>
               <MenuItem
                 icon='log-out-outline'
-                label={isSigningOut ? 'Çıkış yapılıyor…' : 'Çıkış Yap'}
+                label={isSigningOut ? t.signingOut : t.signOut}
                 onPress={handleSignOut}
                 isDestructive
               />
@@ -377,7 +575,7 @@ export default function ProfileScreen() {
 
           {/* Footer */}
           <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.footer}>
-            <Text style={styles.footerText}>TravelBot v1.0.0</Text>
+            <Text style={styles.footerText}>{t.appName} v1.0.0</Text>
           </Animated.View>
         </ScrollView>
       )}
@@ -689,5 +887,12 @@ const createStyles = (colors: typeof Colors.light) =>
     themeOptionTextActive: {
       color: colors.primary,
       fontFamily: Typography.fonts.bodyBold,
+    },
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm + 4,
     },
   });
