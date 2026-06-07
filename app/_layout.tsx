@@ -17,6 +17,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
+import { useColorScheme } from 'react-native';
+import { useThemeStore } from '@/store/theme-store';
 import { useAuthStore } from '@/store/auth-store';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -49,6 +51,10 @@ function AuthGuard() {
 }
 
 export default function RootLayout() {
+  const { themeMode } = useThemeStore();
+  const systemScheme = useColorScheme();
+  const activeTheme = themeMode === 'system' ? (systemScheme ?? 'light') : themeMode;
+
   const [jakartaLoaded] = useJakarta({
     PlusJakartaSans_700Bold,
   });
@@ -78,7 +84,7 @@ export default function RootLayout() {
             <Stack.Screen name='(auth)' />
             <Stack.Screen name='(app)' />
           </Stack>
-          <StatusBar style='dark' />
+          <StatusBar style={activeTheme === 'dark' ? 'light' : 'dark'} />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

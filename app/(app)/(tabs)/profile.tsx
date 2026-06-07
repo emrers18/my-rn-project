@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,14 +17,18 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { uploadAvatar } from '@/lib/storage';
 import { useChatHistory } from '@/src/hooks/use-chat-history';
 import { useProfile, useUpdateProfile } from '@/src/hooks/use-profile';
 import { useAuthStore } from '@/store/auth-store';
+import { useThemeStore } from '@/store/theme-store';
 
 // ─── Avatar Placeholder ───────────────────────────────────────────────────────
 
 function AvatarPlaceholder({ name, size = 96 }: { name: string; size?: number }) {
+  const styles = useThemedStyles(createStyles);
   const initials = name
     .split(' ')
     .filter(Boolean)
@@ -48,6 +52,7 @@ function AvatarPlaceholder({ name, size = 96 }: { name: string; size?: number })
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.statCard}>
       <Text style={styles.statIcon}>{icon}</Text>
@@ -70,6 +75,9 @@ function MenuItem({
   onPress: () => void;
   isDestructive?: boolean;
 }) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+
   return (
     <Pressable
       style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
@@ -77,17 +85,13 @@ function MenuItem({
     >
       <View style={styles.menuItemLeft}>
         <View style={[styles.menuIconBg, isDestructive && styles.menuIconBgDestructive]}>
-          <Ionicons
-            name={icon}
-            size={18}
-            color={isDestructive ? Colors.light.error : Colors.light.primary}
-          />
+          <Ionicons name={icon} size={18} color={isDestructive ? colors.error : colors.primary} />
         </View>
         <Text style={[styles.menuLabel, isDestructive && styles.menuLabelDestructive]}>
           {label}
         </Text>
       </View>
-      <Ionicons name='chevron-forward' size={18} color={Colors.light.outline} />
+      <Ionicons name='chevron-forward' size={18} color={colors.outline} />
     </Pressable>
   );
 }
@@ -97,6 +101,9 @@ function MenuItem({
 export default function ProfileScreen() {
   const { user, signOut, isLoading: isSigningOut } = useAuthStore();
   const userId = user?.id ?? null;
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+  const { themeMode, setThemeMode } = useThemeStore();
 
   const {
     data: profile,
@@ -122,7 +129,7 @@ export default function ProfileScreen() {
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.6,
@@ -232,7 +239,7 @@ export default function ProfileScreen() {
 
       {isProfileLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator color={Colors.light.primary} size='large' />
+          <ActivityIndicator color={colors.primary} size='large' />
           <Text style={styles.loadingText}>Profil yükleniyor…</Text>
         </View>
       ) : profileError ? (
@@ -276,7 +283,7 @@ export default function ProfileScreen() {
                   value={editName}
                   onChangeText={setEditName}
                   placeholder='Adın Soyadın'
-                  placeholderTextColor={Colors.light.icon + '80'}
+                  placeholderTextColor={colors.icon + '80'}
                   autoFocus
                   maxLength={50}
                 />
@@ -324,13 +331,38 @@ export default function ProfileScreen() {
               <MenuItem
                 icon='information-circle-outline'
                 label='Hakkında'
-                onPress={() =>
-                  Alert.alert(
-                    'TravelBot',
-                    'Versiyon 1.0.0\n\nAI destekli seyahat asistanın.\nGemini 2.5 Flash ile güçlendirilmiştir.'
-                  )
-                }
+                onPress={() => Alert.alert('TravelBot')}
               />
+            </View>
+
+            <Text style={[styles.menuSectionTitle, { marginTop: Spacing.md }]}>Uygulama</Text>
+            <View style={styles.menuGroup}>
+              <View style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm }}>
+                <Text style={styles.menuLabel}>Görünüm</Text>
+                <View style={styles.themeSelectorContainer}>
+                  {(['system', 'light', 'dark'] as const).map((mode) => {
+                    const isActive = themeMode === mode;
+                    const labels = {
+                      system: 'Sistem',
+                      light: 'Açık',
+                      dark: 'Koyu',
+                    };
+                    return (
+                      <Pressable
+                        key={mode}
+                        style={[styles.themeOption, isActive && styles.themeOptionActive]}
+                        onPress={() => setThemeMode(mode)}
+                      >
+                        <Text
+                          style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}
+                        >
+                          {labels[mode]}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
 
             <View style={[styles.menuGroup, { marginTop: Spacing.md }]}>
@@ -346,7 +378,6 @@ export default function ProfileScreen() {
           {/* Footer */}
           <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.footer}>
             <Text style={styles.footerText}>TravelBot v1.0.0</Text>
-            <Text style={styles.footerSubtext}>Gemini 2.5 Flash ile güçlendirilmiştir ✨</Text>
           </Animated.View>
         </ScrollView>
       )}
@@ -356,272 +387,307 @@ export default function ProfileScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    height: 48,
-  },
-  headerTitle: {
-    fontFamily: Typography.fonts.heading,
-    fontSize: Typography.sizes.h2,
-    color: Colors.light.text,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  loadingText: {
-    fontFamily: Typography.fonts.body,
-    color: Colors.light.icon,
-    fontSize: Typography.sizes.label,
-  },
-  errorEmoji: {
-    fontSize: 48,
-  },
-  errorText: {
-    fontFamily: Typography.fonts.body,
-    color: Colors.light.error,
-    fontSize: Typography.sizes.body,
-    textAlign: 'center',
-  },
-  retryBtn: {
-    marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Roundness.full,
-    backgroundColor: Colors.light.surfaceContainer,
-  },
-  retryText: {
-    fontFamily: Typography.fonts.label,
-    color: Colors.light.primary,
-    fontSize: Typography.sizes.body,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-  },
+const createStyles = (colors: typeof Colors.light) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      height: 48,
+    },
+    headerTitle: {
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.h2,
+      color: colors.text,
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    loadingText: {
+      fontFamily: Typography.fonts.body,
+      color: colors.icon,
+      fontSize: Typography.sizes.label,
+    },
+    errorEmoji: {
+      fontSize: 48,
+    },
+    errorText: {
+      fontFamily: Typography.fonts.body,
+      color: colors.error,
+      fontSize: Typography.sizes.body,
+      textAlign: 'center',
+    },
+    retryBtn: {
+      marginTop: Spacing.sm,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      borderRadius: Roundness.full,
+      backgroundColor: colors.surfaceContainer,
+    },
+    retryText: {
+      fontFamily: Typography.fonts.label,
+      color: colors.primary,
+      fontSize: Typography.sizes.body,
+    },
+    scrollContent: {
+      paddingHorizontal: Spacing.lg,
+      paddingBottom: Spacing.xxl,
+    },
 
-  // ── Profile Card ──────────────────────────
-  profileCard: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: Spacing.sm,
-  },
-  avatarImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 2,
-    borderColor: Colors.light.primary,
-  },
-  editAvatarOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: Colors.light.primary,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.light.background,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  avatar: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-    // Subtle shadow
-    shadowColor: '#0052CC',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontFamily: Typography.fonts.heading,
-    fontWeight: '700',
-  },
-  displayName: {
-    fontFamily: Typography.fonts.heading,
-    fontSize: Typography.sizes.h1,
-    color: Colors.light.text,
-    textAlign: 'center',
-  },
-  displayEmail: {
-    fontFamily: Typography.fonts.body,
-    fontSize: Typography.sizes.body,
-    color: Colors.light.icon,
-    textAlign: 'center',
-  },
+    // ── Profile Card ──────────────────────────
+    profileCard: {
+      alignItems: 'center',
+      paddingVertical: Spacing.xl,
+      gap: Spacing.sm,
+    },
+    avatarContainer: {
+      position: 'relative',
+      marginBottom: Spacing.sm,
+    },
+    avatarImage: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      borderWidth: 2,
+      borderColor: colors.primary,
+    },
+    editAvatarOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      backgroundColor: colors.primary,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: colors.background,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 3,
+      elevation: 4,
+    },
+    avatar: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: Spacing.sm,
+      // Subtle shadow
+      shadowColor: '#0052CC',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+      elevation: 6,
+    },
+    avatarText: {
+      color: '#FFFFFF',
+      fontFamily: Typography.fonts.heading,
+      fontWeight: '700',
+    },
+    displayName: {
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.h1,
+      color: colors.text,
+      textAlign: 'center',
+    },
+    displayEmail: {
+      fontFamily: Typography.fonts.body,
+      fontSize: Typography.sizes.body,
+      color: colors.icon,
+      textAlign: 'center',
+    },
 
-  // ── Edit Mode ─────────────────────────────
-  editContainer: {
-    width: '100%',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-  editInput: {
-    backgroundColor: Colors.light.surfaceContainerLow,
-    borderRadius: Roundness.xl,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontFamily: Typography.fonts.body,
-    fontSize: Typography.sizes.body,
-    color: Colors.light.text,
-    textAlign: 'center',
-    height: 52,
-  },
-  editActions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-  },
-  editBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Roundness.full,
-    minWidth: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 44,
-  },
-  editBtnCancel: {
-    backgroundColor: Colors.light.surfaceContainer,
-  },
-  editBtnCancelText: {
-    fontFamily: Typography.fonts.label,
-    color: Colors.light.icon,
-    fontSize: Typography.sizes.body,
-  },
-  editBtnSave: {
-    backgroundColor: Colors.light.primaryContainer,
-  },
-  editBtnSaveText: {
-    fontFamily: Typography.fonts.bodyBold,
-    color: '#FFFFFF',
-    fontSize: Typography.sizes.body,
-  },
+    // ── Edit Mode ─────────────────────────────
+    editContainer: {
+      width: '100%',
+      gap: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+    },
+    editInput: {
+      backgroundColor: colors.surfaceContainerLow,
+      borderRadius: Roundness.xl,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      fontFamily: Typography.fonts.body,
+      fontSize: Typography.sizes.body,
+      color: colors.text,
+      textAlign: 'center',
+      height: 52,
+    },
+    editActions: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+    },
+    editBtn: {
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      borderRadius: Roundness.full,
+      minWidth: 100,
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 44,
+    },
+    editBtnCancel: {
+      backgroundColor: colors.surfaceContainer,
+    },
+    editBtnCancelText: {
+      fontFamily: Typography.fonts.label,
+      color: colors.icon,
+      fontSize: Typography.sizes.body,
+    },
+    editBtnSave: {
+      backgroundColor: colors.primaryContainer,
+    },
+    editBtnSaveText: {
+      fontFamily: Typography.fonts.bodyBold,
+      color: '#FFFFFF',
+      fontSize: Typography.sizes.body,
+    },
 
-  // ── Stats ─────────────────────────────────
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.light.surfaceContainerLow,
-    borderRadius: Roundness.lg,
-    padding: Spacing.md,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statIcon: {
-    fontSize: 24,
-  },
-  statValue: {
-    fontFamily: Typography.fonts.heading,
-    fontSize: Typography.sizes.h2,
-    color: Colors.light.text,
-  },
-  statLabel: {
-    fontFamily: Typography.fonts.body,
-    fontSize: Typography.sizes.caption,
-    color: Colors.light.icon,
-  },
+    // ── Stats ─────────────────────────────────
+    statsRow: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+      marginBottom: Spacing.lg,
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: colors.surfaceContainerLow,
+      borderRadius: Roundness.lg,
+      padding: Spacing.md,
+      alignItems: 'center',
+      gap: 4,
+    },
+    statIcon: {
+      fontSize: 24,
+    },
+    statValue: {
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.h2,
+      color: colors.text,
+    },
+    statLabel: {
+      fontFamily: Typography.fonts.body,
+      fontSize: Typography.sizes.caption,
+      color: colors.icon,
+    },
 
-  // ── Menu ──────────────────────────────────
-  menuSection: {
-    gap: Spacing.sm,
-  },
-  menuSectionTitle: {
-    fontFamily: Typography.fonts.heading,
-    fontSize: Typography.sizes.label,
-    color: Colors.light.icon,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: Spacing.xs,
-  },
-  menuGroup: {
-    backgroundColor: Colors.light.surfaceContainerLow,
-    borderRadius: Roundness.lg,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  menuItemPressed: {
-    backgroundColor: Colors.light.surfaceContainer,
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  menuIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: Roundness.md,
-    backgroundColor: Colors.light.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuIconBgDestructive: {
-    backgroundColor: Colors.light.error + '12',
-  },
-  menuLabel: {
-    fontFamily: Typography.fonts.label,
-    fontSize: Typography.sizes.body,
-    color: Colors.light.text,
-  },
-  menuLabelDestructive: {
-    color: Colors.light.error,
-  },
-  menuDivider: {
-    height: 1,
-    backgroundColor: Colors.light.surfaceContainer,
-    marginLeft: 68,
-  },
+    // ── Menu ──────────────────────────────────
+    menuSection: {
+      gap: Spacing.sm,
+    },
+    menuSectionTitle: {
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.label,
+      color: colors.icon,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: Spacing.xs,
+    },
+    menuGroup: {
+      backgroundColor: colors.surfaceContainerLow,
+      borderRadius: Roundness.lg,
+      overflow: 'hidden',
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
+    },
+    menuItemPressed: {
+      backgroundColor: colors.surfaceContainer,
+    },
+    menuItemLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    menuIconBg: {
+      width: 36,
+      height: 36,
+      borderRadius: Roundness.md,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    menuIconBgDestructive: {
+      backgroundColor: colors.error + '12',
+    },
+    menuLabel: {
+      fontFamily: Typography.fonts.label,
+      fontSize: Typography.sizes.body,
+      color: colors.text,
+    },
+    menuLabelDestructive: {
+      color: colors.error,
+    },
+    menuDivider: {
+      height: 1,
+      backgroundColor: colors.surfaceContainer,
+      marginLeft: 68,
+    },
 
-  // ── Footer ────────────────────────────────
-  footer: {
-    alignItems: 'center',
-    marginTop: Spacing.xl,
-    gap: 4,
-  },
-  footerText: {
-    fontFamily: Typography.fonts.label,
-    fontSize: Typography.sizes.caption,
-    color: Colors.light.outline,
-  },
-  footerSubtext: {
-    fontFamily: Typography.fonts.body,
-    fontSize: Typography.sizes.caption,
-    color: Colors.light.outline,
-  },
-});
+    // ── Footer ────────────────────────────────
+    footer: {
+      alignItems: 'center',
+      marginTop: Spacing.xl,
+      gap: 4,
+    },
+    footerText: {
+      fontFamily: Typography.fonts.label,
+      fontSize: Typography.sizes.caption,
+      color: colors.outline,
+    },
+    footerSubtext: {
+      fontFamily: Typography.fonts.body,
+      fontSize: Typography.sizes.caption,
+      color: colors.outline,
+    },
+
+    // ── Theme Selector ────────────────────────
+    themeSelectorContainer: {
+      flexDirection: 'row',
+      backgroundColor: colors.surfaceContainer,
+      borderRadius: Roundness.md,
+      padding: 4,
+      marginTop: Spacing.xs,
+    },
+    themeOption: {
+      flex: 1,
+      paddingVertical: Spacing.xs,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: Roundness.sm,
+    },
+    themeOptionActive: {
+      backgroundColor: colors.background,
+      // Add subtle shadow for premium look
+      shadowColor: colors.text,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    themeOptionText: {
+      fontFamily: Typography.fonts.label,
+      fontSize: Typography.sizes.caption,
+      color: colors.icon,
+    },
+    themeOptionTextActive: {
+      color: colors.primary,
+      fontFamily: Typography.fonts.bodyBold,
+    },
+  });

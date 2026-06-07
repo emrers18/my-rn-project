@@ -32,7 +32,9 @@ DestinationCard:
   "country": "ülke adı",
   "description": "kısa açıklama",
   "highlights": ["özellik1", "özellik2", "özellik3"],
-  "weather": { "temperature": 22, "condition": "Güneşli" }
+  "weather": { "temperature": 22, "condition": "Güneşli" },
+  "latitude": 41.9028,
+  "longitude": 12.4964
 }
 
 HotelCard:
@@ -64,7 +66,13 @@ RouteWidget:
   "title": "rota başlığı",
   "totalDuration": "7 gün",
   "stops": [
-    { "name": "yer adı", "duration": "2 gün", "description": "aktivite açıklaması" }
+    {
+      "name": "yer adı",
+      "duration": "2 gün",
+      "description": "aktivite açıklaması",
+      "latitude": 41.9028,
+      "longitude": 12.4964
+    }
   ]
 }
 
@@ -75,6 +83,7 @@ Genel sohbet için: { "text": "Türkçe yanıt", "widgets": [] }
 - Birden fazla aynı türde widget döndürebilirsin (örn. 3 otel için 3 HotelCard)
 - Tüm widget'lar AYNI TYPE olmalı (HotelCard ile TicketCard'ı karıştırma)
 - currency değeri için "TRY", "EUR", "USD" kullan
+- DestinationCard ve RouteWidget durakları (stops) için gerçekçi tahmini enlem (latitude) ve boylam (longitude) değerlerini sayısal olarak mutlaka ekle (örneğin Roma için latitude: 41.8902, longitude: 12.4922 gibi).
 `.trim();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -127,7 +136,10 @@ Deno.serve(async (req: Request) => {
     const { chatId, userId, content } = body;
 
     if (!chatId || !userId || !content?.trim()) {
-      return Response.json({ error: 'chatId, userId ve content zorunludur.' }, { status: 400, headers: corsHeaders });
+      return Response.json(
+        { error: 'chatId, userId ve content zorunludur.' },
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -161,10 +173,12 @@ Deno.serve(async (req: Request) => {
       .limit(20);
 
     // 4. Build Gemini history (user msg is already included as it was just saved)
-    const geminiHistory: GeminiContent[] = (historyRows ?? []).map((row: { role: string; content: string }) => ({
-      role: row.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: row.content }],
-    }));
+    const geminiHistory: GeminiContent[] = (historyRows ?? []).map(
+      (row: { role: string; content: string }) => ({
+        role: row.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: row.content }],
+      })
+    );
 
     // 5. Call Gemini 2.5 Flash
     const geminiRes = await fetch(

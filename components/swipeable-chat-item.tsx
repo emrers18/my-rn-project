@@ -5,6 +5,8 @@ import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { ChatSession } from '@/src/domain/entities/chat-session';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -27,6 +29,8 @@ export function SwipeableChatItem({
   formatDate,
 }: SwipeableChatItemProps) {
   const swipeableRef = useRef<Swipeable>(null);
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
 
   const handleDelete = () => {
     Alert.alert('Sohbeti Sil', `"${chat.title}" silinecek. Bu işlem geri alınamaz.`, [
@@ -71,7 +75,7 @@ export function SwipeableChatItem({
               <Text style={styles.chatDate}>{formatDate(chat.updatedAt)}</Text>
             </View>
           </View>
-          <Ionicons name='chevron-forward' size={18} color={Colors.light.outline} />
+          <Ionicons name='chevron-forward' size={18} color={colors.outline} />
         </Pressable>
       </Swipeable>
     </Animated.View>
@@ -80,66 +84,67 @@ export function SwipeableChatItem({
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  chatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.light.surfaceContainerLow,
-    borderRadius: Roundness.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  chatItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
-  },
-  chatItemContent: {
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: Roundness.md,
-    backgroundColor: Colors.light.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chatIcon: {
-    fontSize: 18,
-  },
-  chatTitle: {
-    fontFamily: Typography.fonts.label,
-    color: Colors.light.text,
-    fontSize: Typography.sizes.body,
-    fontWeight: '600',
-  },
-  chatDate: {
-    fontFamily: Typography.fonts.body,
-    color: Colors.light.icon,
-    fontSize: Typography.sizes.caption,
-    marginTop: 2,
-  },
-  deleteContainer: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    marginBottom: Spacing.sm,
-    marginLeft: Spacing.xs,
-  },
-  deleteBtn: {
-    backgroundColor: Colors.light.error,
-    borderRadius: Roundness.lg,
-    height: '100%',
-    width: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-  },
-  deleteText: {
-    fontFamily: Typography.fonts.label,
-    color: '#FFFFFF',
-    fontSize: Typography.sizes.caption,
-  },
-});
+const createStyles = (colors: typeof Colors.light) =>
+  StyleSheet.create({
+    chatItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.surfaceContainerLow,
+      borderRadius: Roundness.lg,
+      padding: Spacing.md,
+      marginBottom: Spacing.sm,
+    },
+    chatItemLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+      flex: 1,
+    },
+    chatItemContent: {
+      flex: 1,
+    },
+    iconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: Roundness.md,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    chatIcon: {
+      fontSize: 18,
+    },
+    chatTitle: {
+      fontFamily: Typography.fonts.label,
+      color: colors.text,
+      fontSize: Typography.sizes.body,
+      fontWeight: '600',
+    },
+    chatDate: {
+      fontFamily: Typography.fonts.body,
+      color: colors.icon,
+      fontSize: Typography.sizes.caption,
+      marginTop: 2,
+    },
+    deleteContainer: {
+      justifyContent: 'center',
+      alignItems: 'flex-end',
+      marginBottom: Spacing.sm,
+      marginLeft: Spacing.xs,
+    },
+    deleteBtn: {
+      backgroundColor: colors.error,
+      borderRadius: Roundness.lg,
+      height: '100%',
+      width: 80,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 4,
+    },
+    deleteText: {
+      fontFamily: Typography.fonts.label,
+      color: '#FFFFFF',
+      fontSize: Typography.sizes.caption,
+    },
+  });

@@ -13,6 +13,8 @@ export const DestinationCardDataSchema = z.object({
       condition: z.string(),
     })
     .optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export const HotelCardDataSchema = z.object({
@@ -41,6 +43,8 @@ export const RouteStopSchema = z.object({
   name: z.string(),
   duration: z.string(),
   description: z.string(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export const RouteWidgetDataSchema = z.object({

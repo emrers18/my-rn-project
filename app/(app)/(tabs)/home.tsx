@@ -15,6 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SwipeableChatItem } from '@/components/swipeable-chat-item';
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { ChatSession } from '@/src/domain/entities/chat-session';
 import { useChatHistory } from '@/src/hooks/use-chat-history';
 import { useDeleteChat } from '@/src/hooks/use-delete-chat';
@@ -27,6 +29,8 @@ export default function HomeScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
   const userId = user?.id ?? null;
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
 
   const { data: profile } = useProfile(userId);
 
@@ -101,9 +105,7 @@ export default function HomeScreen() {
       <View style={styles.historySection}>
         <Text style={styles.sectionTitle}>Sohbet Geçmişi</Text>
 
-        {chatsLoading && (
-          <ActivityIndicator color={Colors.light.primary} style={{ marginTop: 16 }} />
-        )}
+        {chatsLoading && <ActivityIndicator color={colors.primary} style={{ marginTop: 16 }} />}
 
         {chatsError && (
           <Pressable onPress={() => refetch()} style={styles.errorContainer}>
@@ -137,7 +139,7 @@ export default function HomeScreen() {
 
       <Pressable style={styles.fabContainer} onPress={handleNewChat}>
         <LinearGradient
-          colors={[Colors.light.primary, Colors.light.primaryContainer]}
+          colors={[colors.primary, colors.primaryContainer]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.fab}
@@ -149,118 +151,119 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-  },
-  greeting: {
-    fontFamily: Typography.fonts.body,
-    fontSize: Typography.sizes.label,
-    color: Colors.light.icon,
-  },
-  userName: {
-    fontFamily: Typography.fonts.heading,
-    fontSize: Typography.sizes.h2,
-    color: Colors.light.text,
-    marginTop: 2,
-  },
-  profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Roundness.full,
-    backgroundColor: Colors.light.surfaceContainer,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  profileIcon: {
-    fontSize: 20,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  hero: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xl,
-    gap: Spacing.xs,
-  },
-  heroTitle: {
-    fontFamily: Typography.fonts.heading,
-    fontSize: Typography.sizes.display,
-    color: Colors.light.text,
-    lineHeight: 40,
-    letterSpacing: -0.5,
-  },
-  heroSubtitle: {
-    fontFamily: Typography.fonts.body,
-    fontSize: Typography.sizes.body,
-    color: Colors.light.icon,
-    lineHeight: 22,
-    marginTop: Spacing.xs,
-  },
-  historySection: {
-    flex: 1,
-    paddingHorizontal: Spacing.lg,
-  },
-  sectionTitle: {
-    fontFamily: Typography.fonts.heading,
-    fontSize: Typography.sizes.h2,
-    color: Colors.light.text,
-    marginBottom: Spacing.md,
-  },
-  emptyContainer: {
-    marginTop: Spacing.xl,
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-  },
-  emptyText: {
-    fontFamily: Typography.fonts.body,
-    color: Colors.light.icon,
-    fontSize: Typography.sizes.body,
-    textAlign: 'center',
-  },
-  errorContainer: {
-    marginTop: Spacing.md,
-    alignItems: 'center',
-  },
-  errorText: {
-    fontFamily: Typography.fonts.body,
-    color: Colors.light.error,
-    fontSize: Typography.sizes.body,
-  },
-  fabContainer: {
-    position: 'absolute',
-    bottom: Spacing.xl,
-    left: Spacing.lg,
-    right: Spacing.lg,
-    elevation: 8,
-    shadowColor: Colors.light.text,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-  },
-  fab: {
-    borderRadius: Roundness.full,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fabText: {
-    fontFamily: Typography.fonts.heading,
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-});
+const createStyles = (colors: typeof Colors.light) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.sm,
+    },
+    greeting: {
+      fontFamily: Typography.fonts.body,
+      fontSize: Typography.sizes.label,
+      color: colors.icon,
+    },
+    userName: {
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.h2,
+      color: colors.text,
+      marginTop: 2,
+    },
+    profileButton: {
+      width: 44,
+      height: 44,
+      borderRadius: Roundness.full,
+      backgroundColor: colors.surfaceContainer,
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden',
+    },
+    profileIcon: {
+      fontSize: 20,
+    },
+    profileImage: {
+      width: '100%',
+      height: '100%',
+    },
+    hero: {
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.xl,
+      gap: Spacing.xs,
+    },
+    heroTitle: {
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.display,
+      color: colors.text,
+      lineHeight: 40,
+      letterSpacing: -0.5,
+    },
+    heroSubtitle: {
+      fontFamily: Typography.fonts.body,
+      fontSize: Typography.sizes.body,
+      color: colors.icon,
+      lineHeight: 22,
+      marginTop: Spacing.xs,
+    },
+    historySection: {
+      flex: 1,
+      paddingHorizontal: Spacing.lg,
+    },
+    sectionTitle: {
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.h2,
+      color: colors.text,
+      marginBottom: Spacing.md,
+    },
+    emptyContainer: {
+      marginTop: Spacing.xl,
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    emptyEmoji: {
+      fontSize: 48,
+    },
+    emptyText: {
+      fontFamily: Typography.fonts.body,
+      color: colors.icon,
+      fontSize: Typography.sizes.body,
+      textAlign: 'center',
+    },
+    errorContainer: {
+      marginTop: Spacing.md,
+      alignItems: 'center',
+    },
+    errorText: {
+      fontFamily: Typography.fonts.body,
+      color: colors.error,
+      fontSize: Typography.sizes.body,
+    },
+    fabContainer: {
+      position: 'absolute',
+      bottom: Spacing.xl,
+      left: Spacing.lg,
+      right: Spacing.lg,
+      elevation: 8,
+      shadowColor: colors.text,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+    },
+    fab: {
+      borderRadius: Roundness.full,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    fabText: {
+      fontFamily: Typography.fonts.heading,
+      color: '#FFFFFF',
+      fontSize: 16,
+    },
+  });
