@@ -4,7 +4,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { RouteWidgetData } from '@/src/domain/entities/ai-response';
-import { MapWidget } from './map-widget';
 
 interface Props {
   data: RouteWidgetData;
@@ -25,11 +24,6 @@ export function RouteWidget({ data, index = 0 }: Props) {
             <Text style={styles.durationText}>⏱ {data.totalDuration}</Text>
           </View>
         </View>
-      </View>
-
-      {/* Interactive Map */}
-      <View style={styles.mapContainer}>
-        <MapWidget stops={data.stops} title={data.title} />
       </View>
 
       {/* Stops */}
@@ -84,10 +78,6 @@ const createStyles = (colors: typeof Colors.light) =>
       paddingHorizontal: 14,
       paddingVertical: 12,
       gap: 10,
-    },
-    mapContainer: {
-      paddingHorizontal: 14,
-      paddingTop: 10,
     },
     mapIcon: { fontSize: 24 },
     title: {

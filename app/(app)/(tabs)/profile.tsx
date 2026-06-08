@@ -18,6 +18,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { TRANSLATIONS } from '@/constants/translations';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { uploadAvatar } from '@/lib/storage';
@@ -26,91 +27,6 @@ import { useProfile, useUpdateProfile } from '@/src/hooks/use-profile';
 import { useAuthStore } from '@/store/auth-store';
 import { useThemeStore } from '@/store/theme-store';
 import { usePreferencesStore } from '@/store/preferences-store';
-
-const TRANSLATIONS = {
-  tr: {
-    profile: 'Profil',
-    chats: 'Sohbet',
-    membership: 'Üyelik',
-    account: 'Hesap',
-    editProfile: 'Profili Düzenle',
-    about: 'Hakkında',
-    appearance: 'Arayüz / Tema',
-    language: 'Dil',
-    currency: 'Para Birimi',
-    travelStyle: 'Seyahat Tarzı',
-    notifications: 'Bildirimler',
-    signOut: 'Çıkış Yap',
-    signingOut: 'Çıkış yapılıyor…',
-    confirmSignOutTitle: 'Çıkış Yap',
-    confirmSignOutMessage: 'Çıkış yapmak istediğinden emin misin?',
-    cancel: 'İptal',
-    save: 'Kaydet',
-    successTitle: 'Başarılı ✅',
-    profileUpdated: 'Profil bilgilerin güncellendi.',
-    avatarUpdated: 'Profil fotoğrafınız güncellendi.',
-    permissionRequired: 'İzin Gerekli',
-    galleryPermission: 'Galeriye erişmek için izin vermeniz gerekmektedir.',
-    errorTitle: 'Hata',
-    avatarUploadError: 'Profil fotoğrafı kaydedilemedi.',
-    photoUploadError: 'Fotoğraf yüklenirken bir hata oluştu.',
-    profileUpdateError: 'Profil güncellenemedi. Lütfen tekrar dene.',
-    signOutError: 'Çıkış yapılırken bir sorun oluştu.',
-    nameCannotBeEmpty: 'İsim boş bırakılamaz.',
-    loadingProfile: 'Profil yükleniyor…',
-    profileLoadError: 'Profil yüklenemedi.',
-    retry: 'Tekrar Dene →',
-    fullNamePlaceholder: 'Adın Soyadın',
-    systemTheme: 'Sistem',
-    lightTheme: 'Açık',
-    darkTheme: 'Koyu',
-    budgetStyle: 'Ekonomik',
-    standardStyle: 'Standart',
-    luxuryStyle: 'Lüks',
-    appName: 'TravelBot',
-  },
-  en: {
-    profile: 'Profile',
-    chats: 'Chats',
-    membership: 'Membership',
-    account: 'Account',
-    editProfile: 'Edit Profile',
-    about: 'About',
-    appearance: 'Theme / Mode',
-    language: 'Language',
-    currency: 'Currency',
-    travelStyle: 'Travel Style',
-    notifications: 'Notifications',
-    signOut: 'Sign Out',
-    signingOut: 'Signing out...',
-    confirmSignOutTitle: 'Sign Out',
-    confirmSignOutMessage: 'Are you sure you want to sign out?',
-    cancel: 'Cancel',
-    save: 'Save',
-    successTitle: 'Success ✅',
-    profileUpdated: 'Profile settings updated.',
-    avatarUpdated: 'Profile photo updated.',
-    permissionRequired: 'Permission Required',
-    galleryPermission: 'Permission to access gallery is required.',
-    errorTitle: 'Error',
-    avatarUploadError: 'Could not save profile photo.',
-    photoUploadError: 'An error occurred while uploading photo.',
-    profileUpdateError: 'Could not update profile. Please try again.',
-    signOutError: 'An error occurred while signing out.',
-    nameCannotBeEmpty: 'Name cannot be empty.',
-    loadingProfile: 'Loading profile...',
-    profileLoadError: 'Could not load profile.',
-    retry: 'Retry →',
-    fullNamePlaceholder: 'Full Name',
-    systemTheme: 'System',
-    lightTheme: 'Light',
-    darkTheme: 'Dark',
-    budgetStyle: 'Budget',
-    standardStyle: 'Standard',
-    luxuryStyle: 'Luxury',
-    appName: 'TravelBot',
-  },
-};
 
 // ─── Avatar Placeholder ───────────────────────────────────────────────────────
 
@@ -180,6 +96,89 @@ function MenuItem({
       </View>
       <Ionicons name='chevron-forward' size={18} color={colors.outline} />
     </Pressable>
+  );
+}
+
+// ─── Traveler Passport ────────────────────────────────────────────────────────
+
+function TravelerPassport({
+  name,
+  chatCount,
+  tier = 'standard',
+}: {
+  name: string;
+  chatCount: number;
+  tier?: 'standard' | 'premium';
+}) {
+  const styles = useThemedStyles(createStyles);
+  const { language } = usePreferencesStore();
+  const t = TRANSLATIONS[language];
+
+  const getTravelerTitle = () => {
+    if (chatCount === 0) return t.titleNovice;
+    if (chatCount <= 5) return t.titleAdventurer;
+    return t.titleGuru;
+  };
+
+  const getTierLabel = () => {
+    return tier === 'premium' ? t.tierPremium : t.tierStandard;
+  };
+
+  return (
+    <LinearGradient
+      colors={['#002D72', '#0052CC']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.passportCard}
+    >
+      {/* Passport Header */}
+      <View style={styles.passportHeader}>
+        <Text style={styles.passportTitle}>{t.travelerPassport}</Text>
+        <Text style={styles.passportStamp}>🛂</Text>
+      </View>
+
+      <View style={styles.passportDivider} />
+
+      {/* Passport Details */}
+      <View style={styles.passportBody}>
+        <View style={styles.passportRow}>
+          <View style={styles.passportCol}>
+            <Text style={styles.passportLabel}>{t.fullNamePlaceholder}</Text>
+            <Text style={styles.passportValue}>{name}</Text>
+          </View>
+          <View style={styles.passportColRight}>
+            <Text style={styles.passportLabel}>{t.passportTier}</Text>
+            <View
+              style={[
+                styles.badge,
+                tier === 'premium' ? styles.badgePremium : styles.badgeStandard,
+              ]}
+            >
+              <Text style={styles.badgeText}>{getTierLabel()}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.passportRow, { marginTop: Spacing.md }]}>
+          <View style={styles.passportCol}>
+            <Text style={styles.passportLabel}>{t.passportLevel}</Text>
+            <Text style={styles.passportValue}>{getTravelerTitle()}</Text>
+          </View>
+          <View style={styles.passportColRight}>
+            <Text style={styles.passportLabel}>{t.chats}</Text>
+            <Text style={styles.passportValue}>{chatCount}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Decorative Barcode */}
+      <View style={styles.passportFooter}>
+        <Text style={styles.passportBarcode}>||||| | |||| ||| || |||| || |||</Text>
+        <Text style={styles.passportNumber}>
+          TB-{(chatCount * 12345).toString().padStart(6, '0')}
+        </Text>
+      </View>
+    </LinearGradient>
   );
 }
 
@@ -412,6 +411,11 @@ export default function ProfileScreen() {
                 <Text style={styles.displayEmail}>{displayEmail}</Text>
               </>
             )}
+          </Animated.View>
+
+          {/* Traveler Passport */}
+          <Animated.View entering={FadeInDown.delay(50).springify()}>
+            <TravelerPassport name={displayName} chatCount={chatCount} />
           </Animated.View>
 
           {/* Stats */}
@@ -894,5 +898,108 @@ const createStyles = (colors: typeof Colors.light) =>
       justifyContent: 'space-between',
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.sm + 4,
+    },
+
+    // ── Passport Card ─────────────────────────
+    passportCard: {
+      borderRadius: Roundness.lg,
+      padding: Spacing.lg,
+      marginBottom: Spacing.lg,
+      borderWidth: 1.5,
+      borderColor: '#E2B235', // Premium Gold Border
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.22,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    passportHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    passportTitle: {
+      color: '#E2B235', // Golden text
+      fontFamily: Typography.fonts.heading,
+      fontSize: Typography.sizes.label,
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+    },
+    passportStamp: {
+      fontSize: 26,
+    },
+    passportDivider: {
+      height: 1.5,
+      backgroundColor: '#E2B235',
+      opacity: 0.35,
+      marginVertical: Spacing.md,
+    },
+    passportBody: {
+      gap: Spacing.sm,
+    },
+    passportRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    passportCol: {
+      flex: 1.2,
+      gap: 2,
+    },
+    passportColRight: {
+      flex: 0.8,
+      alignItems: 'flex-end',
+      gap: 2,
+    },
+    passportLabel: {
+      color: '#FFFFFF',
+      opacity: 0.6,
+      fontSize: 9,
+      fontFamily: Typography.fonts.label,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+    },
+    passportValue: {
+      color: '#FFFFFF',
+      fontSize: 14,
+      fontFamily: Typography.fonts.bodyBold,
+    },
+    badge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: Roundness.sm,
+      borderWidth: 1,
+    },
+    badgeStandard: {
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    badgePremium: {
+      backgroundColor: 'rgba(226, 178, 53, 0.15)',
+      borderColor: '#E2B235',
+    },
+    badgeText: {
+      color: '#FFFFFF',
+      fontSize: 10,
+      fontFamily: Typography.fonts.bodyBold,
+    },
+    passportFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: Spacing.md + 4,
+      opacity: 0.6,
+    },
+    passportBarcode: {
+      color: '#FFFFFF',
+      fontFamily: Typography.fonts.body,
+      fontSize: 10,
+      letterSpacing: 1,
+    },
+    passportNumber: {
+      color: '#FFFFFF',
+      fontFamily: Typography.fonts.body,
+      fontSize: 9,
+      letterSpacing: 1,
     },
   });

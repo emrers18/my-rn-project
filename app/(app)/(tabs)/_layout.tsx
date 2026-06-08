@@ -3,11 +3,15 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Typography } from '@/constants/theme';
+import { TRANSLATIONS } from '@/constants/translations';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const { language } = usePreferencesStore();
+  const t = TRANSLATIONS[language];
 
   return (
     <Tabs
@@ -33,7 +37,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name='home'
         options={{
-          title: 'Ana Sayfa',
+          title: t.tabHome,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
           ),
@@ -42,7 +46,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name='profile'
         options={{
-          title: 'Profil',
+          title: t.tabProfile,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
           ),

@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SwipeableChatItem } from '@/components/swipeable-chat-item';
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { TRANSLATIONS } from '@/constants/translations';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { ChatSession } from '@/src/domain/entities/chat-session';
@@ -27,6 +28,7 @@ import { useProfile } from '@/src/hooks/use-profile';
 import { useRealtimeChats } from '@/src/hooks/use-realtime-messages';
 import { getDependencies } from '@/src/lib/di';
 import { useAuthStore } from '@/store/auth-store';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 interface FeatureItem {
   id: string;
@@ -38,60 +40,93 @@ interface FeatureItem {
   gradient: [string, string];
 }
 
-const FEATURE_ITEMS: FeatureItem[] = [
-  {
-    id: 'destination',
-    title: 'Destinasyon Rehberi',
-    description:
-      'Seyahat etmek istediğiniz yerin en popüler noktalarını, güncel hava durumunu ve konum haritasını tek bir kartta bir araya getirir.',
-    emoji: '🗺️',
-    examplePrompt: "Paris'te gezilecek en popüler yerleri göster",
-    promptSubtitle:
-      "Paris'in turistik mekanlarını, hava durumunu ve harita yerleşimini içeren zengin bir kart.",
-    gradient: ['#0052CC', '#002D72'],
-  },
-  {
-    id: 'hotel',
-    title: 'Akıllı Otel Arama',
-    description:
-      'Bütçenize ve kriterlerinize uygun konaklama seçeneklerini fiyat, popülerlik puanları ve doğrudan rezervasyon butonlarıyla birlikte sunar.',
-    emoji: '🏨',
-    examplePrompt: "Roma'da geceliği 150 doların altında otel önerir misin?",
-    promptSubtitle: 'Bütçenize en uygun Roma otellerini interaktif kartlar halinde listeleyin.',
-    gradient: ['#3D5CA2', '#002D72'],
-  },
-  {
-    id: 'ticket',
-    title: 'Ulaşım & Seferler',
-    description:
-      'Uçak veya otobüs bilet saatlerini, fiyatlarını ve doğrudan satın alma butonunu bir arada göstererek seyahat planlamanızı hızlandırır.',
-    emoji: '✈️',
-    examplePrompt: "İstanbul'dan Barselona'ya uçuş seferlerini listeler misin?",
-    promptSubtitle: 'Uçuş saatleri, fiyatları ve doğrudan bilet alma bağlantısını bulun.',
-    gradient: ['#00B4FF', '#0052CC'],
-  },
-  {
-    id: 'route',
-    title: 'Rota & Duraklar',
-    description:
-      'Günlük seyahat duraklarınızı sıralı bir şekilde listeleyerek gün gün nerede olacağınızı interaktif bir harita rotası üzerinde gösterir.',
-    emoji: '📍',
-    examplePrompt: 'Amsterdam için 3 günlük detaylı seyahat rotası çıkar',
-    promptSubtitle: 'Adım adım durakları ve bu durakları birleştiren harita çizgisini içeren rota.',
-    gradient: ['#0052CC', '#00B4FF'],
-  },
-  {
-    id: 'map',
-    title: 'İnteraktif Harita',
-    description:
-      'Seyahat noktalarını veya tüm durakları harita üzerinde görselleştirir. Konum koordinatları ve bağlantı yolları ile gezinmeyi kolaylaştırır.',
-    emoji: '🗺️',
-    examplePrompt: 'Roma ve Floransa seyahatini haritada göster',
-    promptSubtitle:
-      'Harita üzerinde seyahat edeceğiniz şehirlerin konumlarını ve aralarındaki bağlantıyı inceleyin.',
-    gradient: ['#002D72', '#00B4FF'],
-  },
-];
+function getFeatureItems(t: (typeof TRANSLATIONS)[keyof typeof TRANSLATIONS]): FeatureItem[] {
+  return [
+    {
+      id: 'destination',
+      title: t.featDestTitle,
+      description: t.featDestDesc,
+      emoji: '🗺️',
+      examplePrompt: t.featDestPrompt,
+      promptSubtitle: t.featDestPromptSub,
+      gradient: ['#0052CC', '#002D72'],
+    },
+    {
+      id: 'hotel',
+      title: t.featHotelTitle,
+      description: t.featHotelDesc,
+      emoji: '🏨',
+      examplePrompt: t.featHotelPrompt,
+      promptSubtitle: t.featHotelPromptSub,
+      gradient: ['#3D5CA2', '#002D72'],
+    },
+    {
+      id: 'ticket',
+      title: t.featTicketTitle,
+      description: t.featTicketDesc,
+      emoji: '✈️',
+      examplePrompt: t.featTicketPrompt,
+      promptSubtitle: t.featTicketPromptSub,
+      gradient: ['#00B4FF', '#0052CC'],
+    },
+    {
+      id: 'route',
+      title: t.featRouteTitle,
+      description: t.featRouteDesc,
+      emoji: '📍',
+      examplePrompt: t.featRoutePrompt,
+      promptSubtitle: t.featRoutePromptSub,
+      gradient: ['#0052CC', '#00B4FF'],
+    },
+    {
+      id: 'map',
+      title: t.featMapTitle,
+      description: t.featMapDesc,
+      emoji: '🗺️',
+      examplePrompt: t.featMapPrompt,
+      promptSubtitle: t.featMapPromptSub,
+      gradient: ['#002D72', '#00B4FF'],
+    },
+  ];
+}
+
+interface CuratedRoute {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  prompt: string;
+  gradient: [string, string];
+}
+
+function getCuratedRoutes(t: (typeof TRANSLATIONS)[keyof typeof TRANSLATIONS]): CuratedRoute[] {
+  return [
+    {
+      id: 'rome',
+      title: t.routeRomeTitle,
+      description: t.routeRomeDesc,
+      emoji: '🍕',
+      prompt: t.routeRomePrompt,
+      gradient: ['#002D72', '#0052CC'],
+    },
+    {
+      id: 'kyoto',
+      title: t.routeKyotoTitle,
+      description: t.routeKyotoDesc,
+      emoji: '⛩️',
+      prompt: t.routeKyotoPrompt,
+      gradient: ['#5C0632', '#990F4B'],
+    },
+    {
+      id: 'iceland',
+      title: t.routeIcelandTitle,
+      description: t.routeIcelandDesc,
+      emoji: '❄️',
+      prompt: t.routeIcelandPrompt,
+      gradient: ['#005B5C', '#00A896'],
+    },
+  ];
+}
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
@@ -99,9 +134,15 @@ export default function HomeScreen() {
   const userId = user?.id ?? null;
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
+  const { language } = usePreferencesStore();
+  const t = TRANSLATIONS[language];
 
   const { data: profile } = useProfile(userId);
-  const [selectedFeature, setSelectedFeature] = useState<FeatureItem | null>(null);
+  const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
+
+  const featureItems = getFeatureItems(t);
+  const selectedFeature = featureItems.find((f) => f.id === selectedFeatureId) ?? null;
+  const curatedRoutes = getCuratedRoutes(t);
 
   const {
     data: chats,
@@ -117,11 +158,11 @@ export default function HomeScreen() {
   const handleNewChat = async () => {
     if (!userId) return;
     const { chatRepository } = getDependencies();
-    const result = await chatRepository.createChat({ userId, title: 'Yeni Sohbet' });
+    const result = await chatRepository.createChat({ userId, title: t.newChat });
     if (result.isOk()) {
       router.push({ pathname: '/(app)/chat', params: { chatId: result.value.id } });
     } else {
-      Alert.alert('Hata', 'Sohbet oluşturulamadı.');
+      Alert.alert(t.errorTitle, t.newChatError);
     }
   };
 
@@ -135,7 +176,7 @@ export default function HomeScreen() {
         params: { chatId: result.value.id, initialPrompt: promptText },
       });
     } else {
-      Alert.alert('Hata', 'Sohbet oluşturulamadı.');
+      Alert.alert(t.errorTitle, t.newChatError);
     }
   };
 
@@ -145,101 +186,157 @@ export default function HomeScreen() {
 
   const handleDeleteChat = (chatId: string) => {
     deleteChat(chatId, {
-      onError: () => Alert.alert('Hata', 'Sohbet silinemedi. Lütfen tekrar dene.'),
+      onError: () => Alert.alert(t.errorTitle, t.deleteChatError),
     });
   };
 
   function formatDate(iso: string) {
     const d = new Date(iso);
-    return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+    return d.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Merhaba 👋</Text>
-          <Text style={styles.userName}>
-            {profile?.fullName?.split(' ')[0] ??
-              user?.user_metadata?.full_name?.split(' ')[0] ??
-              user?.email?.split('@')[0] ??
-              'Gezgin'}
-          </Text>
-        </View>
-        <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
-          {profile?.avatarUrl ? (
-            <Image source={{ uri: profile.avatarUrl }} style={styles.profileImage} />
-          ) : (
-            <Text style={styles.profileIcon}>👤</Text>
-          )}
-        </Pressable>
-      </View>
+      <FlatList<ChatSession>
+        data={chats ?? []}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.greeting}>{t.greeting}</Text>
+                <Text style={styles.userName}>
+                  {profile?.fullName?.split(' ')[0] ??
+                    user?.user_metadata?.full_name?.split(' ')[0] ??
+                    user?.email?.split('@')[0] ??
+                    t.defaultUserName}
+                </Text>
+              </View>
+              <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+                {profile?.avatarUrl ? (
+                  <Image source={{ uri: profile.avatarUrl }} style={styles.profileImage} />
+                ) : (
+                  <Text style={styles.profileIcon}>👤</Text>
+                )}
+              </Pressable>
+            </View>
 
-      {/* Hero Section */}
-      <Animated.View entering={FadeIn.duration(500)} style={styles.hero}>
-        <Text style={styles.heroTitle}>Nereye gitmek istersin?</Text>
-        <Text style={styles.heroSubtitle}>
-          AI Asistanın seyahat planını oluşturmana yardımcı olmaya hazır.
-        </Text>
-      </Animated.View>
+            {/* Hero Section */}
+            <Animated.View entering={FadeIn.duration(500)} style={styles.hero}>
+              <Text style={styles.heroTitle}>{t.heroTitle}</Text>
+              <Text style={styles.heroSubtitle}>{t.heroSubtitle}</Text>
+            </Animated.View>
 
-      {/* Yapay Zeka Kartları Tanıtımı */}
-      <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.featuresSection}>
-        <Text style={styles.featuresSectionTitle}>AI Seyahat Özellikleri</Text>
-        <FlatList<FeatureItem>
-          horizontal
-          data={FEATURE_ITEMS}
-          keyExtractor={(item) => item.id}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.featuresList}
-          renderItem={({ item }) => (
-            <Pressable onPress={() => setSelectedFeature(item)} style={styles.featureCardPressable}>
-              <LinearGradient
-                colors={item.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.featureCard}
-              >
-                <Text style={styles.featureEmoji}>{item.emoji}</Text>
-                <View>
-                  <Text style={styles.featureCardTitle} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.featureCardSubtitle} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                </View>
-              </LinearGradient>
-            </Pressable>
-          )}
-        />
-      </Animated.View>
+            {/* Yapay Zeka Kartları Tanıtımı */}
+            <Animated.View
+              entering={FadeInDown.delay(100).duration(500)}
+              style={styles.featuresSection}
+            >
+              <Text style={styles.featuresSectionTitle}>{t.featuresSectionTitle}</Text>
+              <FlatList<FeatureItem>
+                horizontal
+                data={featureItems}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.featuresList}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => setSelectedFeatureId(item.id)}
+                    style={styles.featureCardPressable}
+                  >
+                    <LinearGradient
+                      colors={item.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.featureCard}
+                    >
+                      <Text style={styles.featureEmoji}>{item.emoji}</Text>
+                      <View>
+                        <Text style={styles.featureCardTitle} numberOfLines={1}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.featureCardSubtitle} numberOfLines={2}>
+                          {item.description}
+                        </Text>
+                      </View>
+                    </LinearGradient>
+                  </Pressable>
+                )}
+              />
+            </Animated.View>
 
-      {/* Sohbet Geçmişi */}
-      <View style={styles.historySection}>
-        <Text style={styles.sectionTitle}>Sohbet Geçmişi</Text>
+            {/* Popüler Rotalar Tanıtımı */}
+            <Animated.View
+              entering={FadeInDown.delay(150).duration(500)}
+              style={styles.featuresSection}
+            >
+              <Text style={styles.featuresSectionTitle}>{t.popularDestinations}</Text>
+              <Text style={styles.popularDestinationsSub}>{t.popularDestinationsSub}</Text>
+              <FlatList<CuratedRoute>
+                horizontal
+                data={curatedRoutes}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.featuresList}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => handleStartWithPrompt(item.prompt)}
+                    style={styles.featureCardPressable}
+                  >
+                    <LinearGradient
+                      colors={item.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.featureCard}
+                    >
+                      <Text style={styles.featureEmoji}>{item.emoji}</Text>
+                      <View>
+                        <Text style={styles.featureCardTitle} numberOfLines={1}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.featureCardSubtitle} numberOfLines={2}>
+                          {item.description}
+                        </Text>
+                      </View>
+                    </LinearGradient>
+                  </Pressable>
+                )}
+              />
+            </Animated.View>
 
-        {chatsLoading && <ActivityIndicator color={colors.primary} style={{ marginTop: 16 }} />}
+            {/* Sohbet Geçmişi Başlığı */}
+            <View style={styles.historyHeader}>
+              <Text style={styles.sectionTitle}>{t.historySectionTitle}</Text>
 
-        {chatsError && (
-          <Pressable onPress={() => refetch()} style={styles.errorContainer}>
-            <Text style={styles.errorText}>Yüklenemedi. Tekrar dene →</Text>
-          </Pressable>
-        )}
+              {chatsLoading && (
+                <ActivityIndicator color={colors.primary} style={{ marginTop: 16 }} />
+              )}
 
-        {!chatsLoading && !chatsError && (chats?.length ?? 0) === 0 && (
-          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>🗺️</Text>
-            <Text style={styles.emptyText}>Henüz sohbet yok. İlk sohbeti başlat!</Text>
-          </Animated.View>
-        )}
+              {chatsError && (
+                <Pressable onPress={() => refetch()} style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{t.errorText}</Text>
+                </Pressable>
+              )}
 
-        <FlatList<ChatSession>
-          data={chats ?? []}
-          keyExtractor={(item: ChatSession) => item.id}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }: { item: ChatSession; index: number }) => (
+              {!chatsLoading && !chatsError && (chats?.length ?? 0) === 0 && (
+                <Animated.View
+                  entering={FadeInDown.delay(200).springify()}
+                  style={styles.emptyContainer}
+                >
+                  <Text style={styles.emptyEmoji}>🗺️</Text>
+                  <Text style={styles.emptyText}>{t.emptyText}</Text>
+                </Animated.View>
+              )}
+            </View>
+          </>
+        }
+        renderItem={({ item, index }: { item: ChatSession; index: number }) => (
+          <View style={styles.historyItemContainer}>
             <SwipeableChatItem
               chat={item}
               index={index}
@@ -247,10 +344,10 @@ export default function HomeScreen() {
               onDelete={handleDeleteChat}
               formatDate={formatDate}
             />
-          )}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        />
-      </View>
+          </View>
+        )}
+        ListFooterComponent={<View style={{ height: 110 }} />}
+      />
 
       <Pressable style={styles.fabContainer} onPress={handleNewChat}>
         <LinearGradient
@@ -259,16 +356,16 @@ export default function HomeScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.fab}
         >
-          <Text style={styles.fabText}>💬 Yeni Sohbet Başlat</Text>
+          <Text style={styles.fabText}>{t.newChatBtn}</Text>
         </LinearGradient>
       </Pressable>
 
       {/* Detay Modalı */}
       <Modal
-        visible={selectedFeature !== null}
+        visible={selectedFeatureId !== null}
         transparent
         animationType='fade'
-        onRequestClose={() => setSelectedFeature(null)}
+        onRequestClose={() => setSelectedFeatureId(null)}
       >
         <View style={styles.modalOverlay}>
           <Animated.View entering={FadeInDown.duration(300)} style={styles.modalContent}>
@@ -278,7 +375,7 @@ export default function HomeScreen() {
                 <Text style={styles.modalEmoji}>{selectedFeature?.emoji}</Text>
                 <Text style={styles.modalTitle}>{selectedFeature?.title}</Text>
               </View>
-              <Pressable onPress={() => setSelectedFeature(null)} style={styles.closeButton}>
+              <Pressable onPress={() => setSelectedFeatureId(null)} style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>✕</Text>
               </Pressable>
             </View>
@@ -291,11 +388,8 @@ export default function HomeScreen() {
 
               {/* Örnek Sorgu Kutusu */}
               <View style={styles.promptContainer}>
-                <Text style={styles.promptLabel}>Nasıl Kullanılır?</Text>
-                <Text style={styles.promptSubtitle}>
-                  TravelBot asistanına sohbet ekranında aşağıdaki gibi yazarak bu kartı
-                  tetikleyebilirsiniz:
-                </Text>
+                <Text style={styles.promptLabel}>{t.howToUse}</Text>
+                <Text style={styles.promptSubtitle}>{t.howToUseSubtitle}</Text>
                 <View style={styles.promptBox}>
                   <Text style={styles.promptText}>
                     &quot;{selectedFeature?.examplePrompt}&quot;
@@ -311,7 +405,7 @@ export default function HomeScreen() {
                 onPress={() => {
                   if (selectedFeature) {
                     const prompt = selectedFeature.examplePrompt;
-                    setSelectedFeature(null);
+                    setSelectedFeatureId(null);
                     setTimeout(() => {
                       handleStartWithPrompt(prompt);
                     }, 100);
@@ -324,7 +418,7 @@ export default function HomeScreen() {
                   end={{ x: 1, y: 1 }}
                   style={styles.tryButtonGradient}
                 >
-                  <Text style={styles.tryButtonText}>💬 Hemen Dene</Text>
+                  <Text style={styles.tryButtonText}>{t.tryButtonText}</Text>
                 </LinearGradient>
               </Pressable>
             </View>
@@ -395,8 +489,10 @@ const createStyles = (colors: typeof Colors.light) =>
       lineHeight: 22,
       marginTop: Spacing.xs,
     },
-    historySection: {
-      flex: 1,
+    historyHeader: {
+      paddingHorizontal: Spacing.lg,
+    },
+    historyItemContainer: {
       paddingHorizontal: Spacing.lg,
     },
     sectionTitle: {
@@ -459,6 +555,15 @@ const createStyles = (colors: typeof Colors.light) =>
       color: colors.text,
       marginHorizontal: Spacing.lg,
       marginBottom: Spacing.sm,
+    },
+    popularDestinationsSub: {
+      fontFamily: Typography.fonts.body,
+      fontSize: 12,
+      color: colors.icon,
+      marginHorizontal: Spacing.lg,
+      marginBottom: Spacing.sm,
+      marginTop: -Spacing.xs + 2,
+      opacity: 0.8,
     },
     featuresList: {
       paddingHorizontal: Spacing.lg,

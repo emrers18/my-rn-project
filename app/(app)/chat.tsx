@@ -17,6 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { GenUIRenderer } from '@/components/gen-ui/gen-ui-renderer';
 import { Colors, Roundness, Spacing, Typography } from '@/constants/theme';
+import { TRANSLATIONS } from '@/constants/translations';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Message } from '@/src/domain/entities/message';
@@ -24,10 +25,13 @@ import { useAiChat } from '@/src/hooks/use-ai-chat';
 import { useMessages } from '@/src/hooks/use-messages';
 import { useRealtimeMessages } from '@/src/hooks/use-realtime-messages';
 import { useAuthStore } from '@/store/auth-store';
+import { usePreferencesStore } from '@/store/preferences-store';
 
 // ─── Typing Indicator ─────────────────────────────────────────────────────────
 function TypingIndicator() {
   const styles = useThemedStyles(createStyles);
+  const { language } = usePreferencesStore();
+  const t = TRANSLATIONS[language];
   return (
     <Animated.View entering={FadeIn.duration(300)} style={styles.typingBubble}>
       <View style={styles.typingDots}>
@@ -35,7 +39,7 @@ function TypingIndicator() {
           <View key={i} style={[styles.typingDot, { opacity: 0.4 + i * 0.2 }]} />
         ))}
       </View>
-      <Text style={styles.typingLabel}>TravelBot yanıtlıyor…</Text>
+      <Text style={styles.typingLabel}>{t.botAnswering}</Text>
     </Animated.View>
   );
 }
@@ -53,18 +57,23 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = useThemedStyles(createStyles);
+  const { language } = usePreferencesStore();
+  const t = TRANSLATIONS[language];
 
   const userId = user?.id ?? null;
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error } = useMessages(
-    chatId ?? null
-  );
+  const data = useMessages(chatId ?? null);
+  const messages = data.data?.messages ?? [];
+  const isLoading = data.isLoading;
+  const isFetchingNextPage = data.isFetchingNextPage;
+  const hasNextPage = data.hasNextPage;
+  const fetchNextPage = data.fetchNextPage;
+  const error = data.error;
 
   const { mutate: sendAiMessage, isPending: isSending } = useAiChat();
 
   useRealtimeMessages(chatId ?? null, userId);
 
-  const messages = data?.messages ?? [];
   const hasSentInitialPrompt = useRef(false);
 
   useEffect(() => {
@@ -83,12 +92,12 @@ export default function ChatScreen() {
         {
           onError: () => {
             hasSentInitialPrompt.current = false;
-            Alert.alert('Hata', 'Mesaj gönderilemedi. Lütfen tekrar dene.');
+            Alert.alert(t.errorTitle, t.sendError);
           },
         }
       );
     }
-  }, [initialPrompt, isLoading, messages.length, isSending, userId, chatId, sendAiMessage]);
+  }, [initialPrompt, isLoading, messages.length, isSending, userId, chatId, sendAiMessage, t]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -110,7 +119,7 @@ export default function ChatScreen() {
     sendAiMessage(
       { chatId, userId, content },
       {
-        onError: () => Alert.alert('Hata', 'Mesaj gönderilemedi. Lütfen tekrar dene.'),
+        onError: () => Alert.alert(t.errorTitle, t.sendError),
       }
     );
   };
@@ -133,7 +142,7 @@ export default function ChatScreen() {
             widgetData={item.metadata.widgetData as Record<string, unknown> | undefined}
           />
           <Text style={styles.bubbleTime}>
-            {new Date(item.createdAt).toLocaleTimeString('tr-TR', {
+            {new Date(item.createdAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', {
               hour: '2-digit',
               minute: '2-digit',
             })}
@@ -154,7 +163,7 @@ export default function ChatScreen() {
         <Text
           style={[styles.bubbleTime, isUser ? styles.bubbleTimeUser : styles.bubbleTimeAssistant]}
         >
-          {new Date(item.createdAt).toLocaleTimeString('tr-TR', {
+          {new Date(item.createdAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', {
             hour: '2-digit',
             minute: '2-digit',
           })}
@@ -177,7 +186,7 @@ export default function ChatScreen() {
           </Pressable>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle} numberOfLines={1}>
-              {chatId ? 'TravelBot Assistant' : 'Yeni Sohbet'}
+              {chatId ? 'TravelBot Assistant' : t.newChat}
             </Text>
             <View style={[styles.statusDot, isSending && styles.statusDotActive]} />
           </View>
@@ -188,22 +197,20 @@ export default function ChatScreen() {
         {isLoading ? (
           <View style={styles.centered}>
             <ActivityIndicator color={colors.primary} size='large' />
-            <Text style={styles.loadingText}>Sohbet yükleniyor…</Text>
+            <Text style={styles.loadingText}>{t.loadingChat}</Text>
           </View>
         ) : error ? (
           <View style={styles.centered}>
             <Text style={styles.errorEmoji}>😞</Text>
-            <Text style={styles.errorText}>Mesajlar yüklenemedi.</Text>
+            <Text style={styles.errorText}>{t.messagesLoadError}</Text>
           </View>
         ) : messages.length === 0 && !isSending ? (
           <View style={styles.centered}>
             <Text style={styles.emptyEmoji}>🗺️</Text>
-            <Text style={styles.emptyTitle}>{'TravelBot\u0027a Sor'}</Text>
-            <Text style={styles.emptySubtitle}>
-              Destinasyon, otel, uçuş veya rota hakkında her şeyi sorabilirsin!
-            </Text>
+            <Text style={styles.emptyTitle}>{t.askTravelBot}</Text>
+            <Text style={styles.emptySubtitle}>{t.askSubtitle}</Text>
             <View style={styles.suggestionRow}>
-              {["Roma'da butik otel", 'Paris rotası', 'İstanbul → Barcelona uçuşu'].map((s) => (
+              {[t.suggestHotel, t.suggestRoute, t.suggestFlight].map((s) => (
                 <Pressable key={s} style={styles.suggestionChip} onPress={() => setInputText(s)}>
                   <Text style={styles.suggestionText}>{s}</Text>
                 </Pressable>
@@ -233,7 +240,7 @@ export default function ChatScreen() {
         <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           <TextInput
             style={styles.input}
-            placeholder='Bir şey sor…'
+            placeholder={t.inputPlaceholder}
             placeholderTextColor={colors.icon}
             value={inputText}
             onChangeText={setInputText}
