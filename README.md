@@ -1,50 +1,101 @@
-# Welcome to your Expo app 👋
+# 🗺️ TravelBot — AI-Powered Personal Travel Assistant
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+[![Expo](https://img.shields.io/badge/Expo-SDK%2054-000000?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React_Native-v0.81-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Gemini](https://img.shields.io/badge/Gemini_AI-Flash_1.5-blue?style=for-the-badge&logo=google-gemini&logoColor=white)](https://deepmind.google/technologies/gemini/)
 
-## Get started
+**TravelBot** is a premium, cross-platform mobile travel companion built with React Native and Expo. Powered by Google's Gemini AI and Supabase, it allows travelers to plan itineraries, search flights and accommodation, view locations, and explore destinations dynamically via an interactive generative UI (GenUI) interface.
 
-1. Install dependencies
+---
 
+## ✨ Key Features
+
+### 🤖 1. Generative UI (GenUI) Chat
+Conversations with the AI are not just text. Based on your inquiries, the assistant dynamically injects rich, interactive components directly into the chat:
+*   **Destination Cards:** Shows highlights, weather forecasts, and location details.
+*   **Smart Hotel Cards:** Compare prices, ratings, amenities, and trigger direct bookings.
+*   **Ticket & Route Cards:** Displays flight/bus times, flight numbers, pricing, and ticket links.
+*   **Interactive Timelines:** Displays day-by-day travel routes.
+
+### 🌎 2. Real-Time Centralized Localization
+Full support for **Turkish (TR)** and **English (EN)**. Changing settings instantly translates:
+*   Tab navigation layout labels.
+*   Home page sliders, features description, and concepts.
+*   Active chat screen suggestions, input placeholders, indicators, and dates.
+*   Profile and system preference settings.
+
+### 🛂 3. Traveler Passport & Rewards
+Gamified traveler profile card featuring a classic physical passport look:
+*   **Dynamic Title Badge:** Assigns titles like *Novice Traveler (Yeni Gezgin)*, *Adventurer (Maceracı)*, or *Road Guru (Yol Gurusu)* based on your active chat sessions count.
+*   **Tier Status:** Shows membership state (*Standard* or *Premium*).
+*   **Decorative Design:** Premium golden borders, barcodes, and dynamic ID numbers.
+
+### 🎨 4. Sleek Theme Engine
+*   **Modes:** Light, Dark, and System theme selectors.
+*   **Aesthetics:** Harmonious corporate blue palettes (`#0052CC` primary brand color), Jakarta Sans headlines, and clean spacing.
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+The application is structured following Clean Architecture principles:
+
+*   **Core Logic:** TypeScript, Zustand (State stores), TanStack React Query v5 (Server cache), neverthrow (Functional error handling).
+*   **UI Elements:** React Native Reanimated (Smooth 60fps animations), Expo Image (Cached imagery), React Native Maps (Static/Interactive geolocation), Expo Router v3 (File-based navigation).
+*   **Backend:** Supabase Database (RLS policies, Realtime hooks, Avatars bucket storage), Supabase Auth.
+*   **AI Engine:** Google Gemini SDK integration wrapped inside a secure Supabase Edge Function to protect API credentials.
+
+---
+
+## 🚀 Getting Started
+
+### 📋 Prerequisites
+*   Node.js (v18+)
+*   Expo Go app on iOS/Android or emulator setup.
+
+### 📥 Installation
+1. Clone the repository and navigate to the directory:
+   ```bash
+   cd my-rn-project
+   ```
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
+### ⚙️ Environment Configuration
+Create a `.env.local` file in the root directory and configure your Supabase variables:
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
+### 🏃 Running Locally
+1. Start the Expo Bundler:
    ```bash
    npx expo start
    ```
+2. Open on device:
+   *   Press **`a`** for Android Emulator.
+   *   Press **`i`** for iOS Simulator.
+   *   Scan the QR code in your console with your **Expo Go** application to run on a physical device.
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🧪 Quality Assurance & Scripts
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Verify code safety, styling standards, and tests with:
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+*   **Type Checker:**
+    ```bash
+    npx tsc --noEmit
+    ```
+*   **ESLint Linter:**
+    ```bash
+    npm run lint
+    ```
+*   **Jest Unit Tests:**
+    ```bash
+    npm test
+    ```
